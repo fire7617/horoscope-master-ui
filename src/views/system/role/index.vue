@@ -274,6 +274,7 @@ export default {
   },
   created() {
     this.getList();
+    this.getMenuTreeselect();
   },
   methods: {
     /** 查詢角色列表 */
@@ -304,7 +305,7 @@ export default {
     /** 根據角色ID查詢菜單樹結構 */
     getRoleMenuTreeselect(roleId) {
       return roleMenuTreeselect(roleId).then(response => {
-        this.menuOptions = response.menus;
+        //this.menuOptions = response.menus;
         return response;
       });
     },
@@ -403,29 +404,28 @@ export default {
     /** 新增按鈕操作 */
     handleAdd() {
       this.reset();
-      this.getMenuTreeselect();
+      
       this.open = true;
       this.title = "添加角色";
     },
     /** 修改按鈕操作 */
     handleUpdate(row) {
       this.reset();
+   
+      this.getMenuTreeselect();
       const roleId = row.roleId || this.ids
       const roleMenu = this.getRoleMenuTreeselect(roleId);
       getRole(roleId).then(response => {
         this.form = response.data;
+        this.title = "修改角色";
         this.open = true;
+      }).then(response => {
         this.$nextTick(() => {
-          roleMenu.then(res => {
-            let checkedKeys = res.checkedKeys
-            checkedKeys.forEach((v) => {
-                this.$nextTick(()=>{
-                    this.$refs.menu.setChecked(v, true ,false);
-                })
-            })
+          roleMenu.then(response => {
+            console.log(this.$refs.menu)
+            this.$refs.menu.setCheckedKeys(response.data.checkedKeys);
           });
         });
-        this.title = "修改角色";
       });
     },
     /** 選擇角色權限範圍觸發 */
