@@ -19,10 +19,6 @@
           v-hasPermi="['system:member:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['system:member:edit']">修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:member:remove']">刪除</el-button>
       </el-col>
@@ -45,31 +41,27 @@
         <template slot-scope="scope">
           <span>
             {{
-              scope.row.bloodType == 0 ? 'A' :
-                scope.row.bloodType == 1 ? 'B' :
-                  scope.row.bloodType == 2 ? 'AB' :
-                    scope.row.bloodType == 3 ? 'O' :
-                      '不確定'
+              scope.row.bloodType == 1 ? 'A' :
+                scope.row.bloodType == 2 ? 'B' :
+                  scope.row.bloodType == 3 ? 'AB' :
+                    scope.row.bloodType == 4 ? 'O' :
+                      '未設定'
             }}
           </span>
         </template>
       </el-table-column>
 
-      <el-table-column label="學業狀態" align="center">
+      <el-table-column label="學事業狀態" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.educationStatus == 0 ? '在學' : '畢業' }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="工作狀態" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.workStatus == 0 ? '在職' : '待業' }}</span>
+          <span v-if="scope.row.workStatus == null">未設定</span>
+          <span v-for="row in careerOption" v-if="scope.row.workStatus == row.value">{{ row.label }}</span>
         </template>
       </el-table-column>
 
       <el-table-column label="感情狀態" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.relationshipStatus == 0 ? '單身' : '已婚' }}</span>
+          <span v-if="scope.row.relationshipStatus == null">未設定</span>
+          <span v-for="row in loveOption" v-if="scope.row.relationshipStatus == row.value">{{ row.label }}</span>
         </template>
       </el-table-column>
 
@@ -123,7 +115,7 @@
 
         <el-form-item label="會員星座" prop="zodiacSign">
           <el-select v-model="form.zodiacSign" placeholder="請選擇星座">
-            <el-option v-for="sign in zodiacSigns" :key="sign.id" :label="sign.name_zh" :value="sign.name_zh">
+            <el-option v-for="sign in zodiacSigns" :key="sign.id" :label="sign.name_zh" :value="sign.id">
               {{ sign.name_zh }}
             </el-option>
           </el-select>
@@ -146,32 +138,29 @@
         </el-form-item>
         <el-form-item label="會員血型" prop="bloodType">
           <el-select v-model="form.bloodType" placeholder="請選擇血型">
-            <el-option :label="'A'" :value="'0'"></el-option>
-            <el-option :label="'B'" :value="'1'"></el-option>
-            <el-option :label="'AB'" :value="'2'"></el-option>
-            <el-option :label="'O'" :value="'3'"></el-option>
-            <el-option :label="'不確定'" :value="'4'"></el-option>
+            <el-option :label="'A'" :value="'1'"></el-option>
+            <el-option :label="'B'" :value="'2'"></el-option>
+            <el-option :label="'AB'" :value="'3'"></el-option>
+            <el-option :label="'O'" :value="'4'"></el-option>
+            <el-option :label="'不確定'" :value="'0'"></el-option>
           </el-select>
         </el-form-item>
 
-        <el-form-item label="學業狀態" prop="educationStatus">
-          <el-select v-model="form.educationStatus" placeholder="請選擇學業狀態">
-            <el-option :label="'在學'" :value="'0'"></el-option>
-            <el-option :label="'畢業'" :value="'1'"></el-option>
+        <el-form-item label="學事業狀態" prop="workStatus">
+          <el-select v-model="form.workStatus" placeholder="請選擇狀態">
+            <el-option v-for="row in careerOption" :key="row.value" :label="row.label" :value="row.value">
+              {{ row.label }}
+            </el-option>
           </el-select>
         </el-form-item>
 
-        <el-form-item label="工作狀態" prop="workStatus">
-          <el-select v-model="form.workStatus" placeholder="請選擇工作狀態">
-            <el-option :label="'在職'" :value="'0'"></el-option>
-            <el-option :label="'待業'" :value="'1'"></el-option>
-          </el-select>
-        </el-form-item>
+       
 
         <el-form-item label="感情狀態" prop="relationshipStatus">
           <el-select v-model="form.relationshipStatus" placeholder="請選擇感情狀態">
-            <el-option :label="'單身'" :value="'0'"></el-option>
-            <el-option :label="'已婚'" :value="'1'"></el-option>
+            <el-option v-for="row in loveOption" :key="row.value" :label="row.label" :value="row.value">
+              {{ row.label }}
+            </el-option>
           </el-select>
         </el-form-item>
       </el-form>
@@ -233,19 +222,38 @@ export default {
         ]
       },
       zodiacSigns: [
-        { id: 1, name: 'Aries', name_zh: '白羊座' },
-        { id: 2, name: 'Taurus', name_zh: '金牛座' },
-        { id: 3, name: 'Gemini', name_zh: '雙子座' },
-        { id: 4, name: 'Cancer', name_zh: '巨蟹座' },
-        { id: 5, name: 'Leo', name_zh: '獅子座' },
-        { id: 6, name: 'Virgo', name_zh: '處女座' },
-        { id: 7, name: 'Libra', name_zh: '天秤座' },
-        { id: 8, name: 'Scorpio', name_zh: '天蠍座' },
-        { id: 9, name: 'Sagittarius', name_zh: '射手座' },
-        { id: 10, name: 'Capricorn', name_zh: '摩羯座' },
-        { id: 11, name: 'Aquarius', name_zh: '水瓶座' },
-        { id: 12, name: 'Pisces', name_zh: '雙魚座' }
-      ]
+        { id: '0', name: 'Aries', name_zh: '牡羊座' },
+        { id: '1', name: 'Taurus', name_zh: '金牛座' },
+        { id: '2', name: 'Gemini', name_zh: '雙子座' },
+        { id: '3', name: 'Cancer', name_zh: '巨蟹座' },
+        { id: '4', name: 'Leo', name_zh: '獅子座' },
+        { id: '5', name: 'Virgo', name_zh: '處女座' },
+        { id: '6', name: 'Libra', name_zh: '天秤座' },
+        { id: '7', name: 'Scorpio', name_zh: '天蠍座' },
+        { id: '8', name: 'Sagittarius', name_zh: '射手座' },
+        { id: '9', name: 'Capricorn', name_zh: '摩羯座' },
+        { id: '10', name: 'Aquarius', name_zh: '水瓶座' },
+        { id: '11', name: 'Pisces', name_zh: '雙魚座' }
+      ],
+      loveOption: [
+        { value: "0", label: "未設定"},
+        { value: "1", label: "單身"},
+        { value: "2", label: "暗戀"},
+        { value: "3", label: "曖昧"},
+        { value: "4", label: "戀愛"},
+        { value: "5", label: "已婚"},
+        { value: "6", label: "訂婚"},
+        { value: "7", label: "失戀"},
+      ],
+      careerOption: [
+        { value: "0", label: "未設定"},
+        { value: "1", label: "在學"},
+        { value: "2", label: "求學"},
+        { value: "3", label: "在職"},
+        { value: "4", label: "求職"},
+        { value: "5", label: "轉職"},
+        { value: "6", label: "退休"},
+      ],
 
     };
   },
