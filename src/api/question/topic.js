@@ -12,7 +12,7 @@ export function listTopic(query) {
 // 查詢詳細
 export function getTopic(id) {
   return request({
-    url: 'sys_question/get_topic/' + memberId,
+    url: 'sys_question/get_topic/' + id,
     method: 'get'
   })
 }
@@ -38,7 +38,17 @@ export function updateTopic(data) {
 // 刪除
 export function delTopic(id) {
   return request({
-    url: 'sys_question/delete_topic/' + memberId,
+    url: 'sys_question/delete_topic/' + id,
     method: 'delete'
+  })
+}
+
+
+// Test
+export function testTopic(data) {
+  return request({
+    url: 'sys_question/test_topic',
+    method: 'post',
+    data: data
   })
 }

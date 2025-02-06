@@ -1,11 +1,13 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="AI" prop="ai">
-        <el-select v-model="queryParams.ai" @change="handleQuery">
-          <el-option label="預設" value="0"></el-option>
-          <el-option label="GoogleMap" value="1"></el-option>
-          <el-option label="Plexity" value="2"></el-option>
+      <el-form-item label="類型" prop="type">
+        <el-select v-model="queryParams.type" @change="handleQuery">
+          <el-option label="食" value="1"></el-option>
+          <el-option label="衣" value="2"></el-option>
+          <el-option label="住" value="3"></el-option>
+          <el-option label="行" value="4"></el-option>
+          <el-option label="樂" value="5"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="關鍵字" prop="keyword">
@@ -20,15 +22,11 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['system:suggestion:add']">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['system:suggestion:edit']">修改</el-button>
+          v-hasPermi="['system:topic:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['system:suggestion:remove']">刪除</el-button>
+v-hasPermi="['system:topic:remove']">刪除</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -36,36 +34,24 @@
     <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="ID" align="center" prop="id" />
+      
       <el-table-column label="類型" align="center" prop="type" show-overflow-tooltip>
         <template slot-scope="scope">
-          <span v-if="scope.row.type === 0">綜合</span>
-          <span v-if="scope.row.type === 1">家庭</span>
-          <span v-if="scope.row.type === 2">愛情</span>
-          <span v-if="scope.row.type === 3">人際</span>
-          <span v-if="scope.row.type === 4">健康</span>
-          <span v-if="scope.row.type === 5">金錢</span>
-          <span v-if="scope.row.type === 6">學事業</span>
-          <span v-if="scope.row.type === 7">旅行</span>
-          <span v-if="scope.row.type === 8">第六感</span>
-          <span v-if="scope.row.type === 9">挑戰</span>
+          <span v-if="scope.row.type === 1">食</span>
+          <span v-if="scope.row.type === 2">衣</span>
+          <span v-if="scope.row.type === 3">住</span>
+          <span v-if="scope.row.type === 4">行</span>
+          <span v-if="scope.row.type === 5">樂</span>
         </template>
       </el-table-column>
+
       <el-table-column label="問題" align="left" prop="tw" show-overflow-tooltip/>
-      <el-table-column label="解答方向" align="center" prop="direction" />
-      <el-table-column label="描述" align="center" prop="description" show-overflow-tooltip />
-      <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
-        <template slot-scope="scope">
-          <span v-if="scope.row.ai === 0">預設</span>
-          <span v-if="scope.row.ai === 1">GoogleMap</span>
-          <span v-if="scope.row.ai === 2">Plexity</span>
-        </template>
-      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="150">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:suggestion:edit']">修改</el-button>
+            v-hasPermi="['system:topic:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['system:suggestion:remove']">刪除</el-button>
+            v-hasPermi="['system:topic:remove']">刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -84,19 +70,6 @@
           <el-tag>中文</el-tag><el-input v-model="form.tw" placeholder="請輸入中文問題" />
           <el-tag>英文</el-tag><el-input v-model="form.en" placeholder="請輸入英文問題" />
         </el-form-item>
-        <el-form-item label="解答方向" prop="direction" required>
-          <el-input v-model="form.direction" placeholder="請輸入解答方向" />
-        </el-form-item>
-        <el-form-item label="AI 類型" prop="ai">  
-              <el-select v-model="form.ai" @change="handleChangeType">
-                <el-option label="預設" value="0"></el-option>
-                <el-option label="GoogleMap" value="1"></el-option>
-                <el-option label="Plexity" value="2"></el-option>
-              </el-select>
-        </el-form-item>
-        <el-form-item label="描途" prop="description">  
-              <el-input type="textarea" v-model="form.description" placeholder="請輸入描述" />
-        </el-form-item>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -110,10 +83,10 @@
 </template>
 
 <script>
-import { listSuggestion, getSuggestion, delSuggestion, addSuggestion, updateSuggestion, testSuggestion } from "@/api/question/suggestion";
+import { listTopic, getTopic, delTopic, addTopic, updateTopic, testTopic } from "@/api/question/topic";
 
 export default {
-  name: "Suggestion",
+  name: "Topic",
   dicts: ['sys_normal_disable'],
   data() {
     return {
@@ -145,16 +118,11 @@ export default {
       },
       // 大類選項
       typeOption: [
-        { value: '0', label: '綜合' },
-        { value: '1', label: '家庭' },
-        { value: '2', label: '愛情' },
-        { value: '3', label: '人際' },
-        { value: '4', label: '健康' },
-        { value: '5', label: '金錢' },
-        { value: '6', label: '學事業' },
-        { value: '7', label: '旅行' },
-        { value: '8', label: '第六感' },
-        { value: '9', label: '挑戰' },
+        { value: '1', label: '食' },
+        { value: '2', label: '衣' },
+        { value: '3', label: '住' },
+        { value: '4', label: '行' },
+        { value: '5', label: '樂' },
       ],
       // 表單參數
       form: {
@@ -182,7 +150,7 @@ export default {
     /** 查詢運勢結果列表 */
     getList() {
       this.loading = true;
-      listSuggestion(this.queryParams).then(response => {
+      listTopic(this.queryParams).then(response => {
         this.list = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -245,7 +213,7 @@ export default {
     handleUpdate(row) {
       this.reset();
       const id = row.id || this.ids
-      getSuggestion(id).then(response => {
+      getTopic(id).then(response => {
         this.form = response.data;
         this.open = true;
         this.title = "修改結果";
@@ -253,7 +221,7 @@ export default {
     },
     submitTest: function () {
       console.log(this.form);
-      testSuggestion(this.form).then(response => {
+      testTopic(this.form).then(response => {
         console.log(response);
         this.$message({
           showClose: true,
@@ -268,7 +236,7 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.id != undefined) {
-            updateSuggestion(this.form).then(response => {
+            updateTopic(this.form).then(response => {
               if (response.code != 200) {
                 this.$modal.msgError(response.message);
                 return
@@ -279,7 +247,7 @@ export default {
               this.getList();
             });
           } else {
-            addSuggestion(this.form).then(response => {
+            addTopic(this.form).then(response => {
               if (response.code != 200) {
                 this.$modal.msgError(response.message);
                 return
@@ -296,7 +264,7 @@ export default {
     handleDelete(row) {
       const ids = row.id || this.ids;
       this.$modal.confirm('是否確認刪除編號為"' + ids + '"的數據項？').then(function () {
-        return delSuggestion(ids);
+        return delTopic(ids);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("刪除成功");
