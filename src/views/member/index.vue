@@ -84,6 +84,8 @@
             v-hasPermi="['system:member:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
             v-hasPermi="['system:member:remove']">刪除</el-button>
+          <el-button size="mini" type="text" icon="el-icon-time" @click="handleExtendVip(scope.row)"
+            v-hasPermi="['system:member:extend']">延展VIP</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -142,7 +144,7 @@
             <el-option :label="'B'" :value="'2'"></el-option>
             <el-option :label="'AB'" :value="'3'"></el-option>
             <el-option :label="'O'" :value="'4'"></el-option>
-            <el-option :label="'不確定'" :value="'0'"></el-option>
+            <el-option :label="'未設定'" :value="'0'"></el-option>
           </el-select>
         </el-form-item>
 
@@ -153,9 +155,6 @@
             </el-option>
           </el-select>
         </el-form-item>
-
-       
-
         <el-form-item label="感情狀態" prop="relationshipStatus">
           <el-select v-model="form.relationshipStatus" placeholder="請選擇感情狀態">
             <el-option v-for="row in loveOption" :key="row.value" :label="row.label" :value="row.value">
@@ -171,11 +170,37 @@
       </div>
     </el-dialog>
 
+    <!-- VIP延展對話框 -->
+    <el-dialog title="延展VIP" :visible.sync="vipDialogVisible" width="400px" append-to-body>
+      <el-form ref="vipForm" :model="vipForm" :rules="vipRules" label-width="100px">
+        <el-form-item label="會員名稱">
+          <span>{{ vipForm.nickname }}</span>
+        </el-form-item>
+        <el-form-item label="目前到期日">
+          <span>{{ vipForm.currentExpireDate || '尚未設定' }}</span>
+        </el-form-item>
+        <el-form-item label="延展到期日" prop="expireDate">
+          <el-date-picker
+            v-model="vipForm.expireDate"
+            type="datetime"
+            placeholder="請選擇到期日期時間"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            format="yyyy-MM-dd HH:mm:ss"
+            :picker-options="pickerOptions">
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitVipExtend">確 定</el-button>
+        <el-button @click="vipDialogVisible = false">取 消</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { listMember, getMember, delMember, addMember, updateMember } from "@/api/member/member";
+import { listMember, getMember, delMember, addMember, updateMember, extendVip } from "@/api/member/member";
 
 export default {
   name: "Member",
@@ -254,7 +279,28 @@ export default {
         { value: "5", label: "轉職"},
         { value: "6", label: "退休"},
       ],
-
+      // VIP延展對話框顯示狀態
+      vipDialogVisible: false,
+      // VIP延展表單
+      vipForm: {
+        memberId: undefined,
+        nickname: '',
+        currentExpireDate: '',
+        expireDate: '',
+        remark: ''
+      },
+      // VIP延展表單驗證規則
+      vipRules: {
+        expireDate: [
+          { required: true, message: "到期日期不能為空", trigger: "blur" }
+        ]
+      },
+      // 日期選擇器配置
+      pickerOptions: {
+        disabledDate(time) {
+          return time.getTime() < Date.now() - 8.64e7; // 禁用今天以前的日期
+        }
+      }
     };
   },
   created() {
@@ -355,6 +401,27 @@ export default {
         this.$modal.msgSuccess("刪除成功");
       }).catch(() => { });
     },
+    /** VIP延展按鈕操作 */
+    handleExtendVip(row) {
+      this.vipForm.memberId = row.id;
+      this.vipForm.nickname = row.nickname;
+      this.vipForm.currentExpireDate = row.vipExpireDate; // 假設API返回的數據中包含此字段
+      this.vipForm.expireDate = '';
+      this.vipForm.remark = '';
+      this.vipDialogVisible = true;
+    },
+    /** 提交VIP延展 */
+    submitVipExtend() {
+      this.$refs["vipForm"].validate(valid => {
+        if (valid) {
+          extendVip(this.vipForm).then(response => {
+            this.$modal.msgSuccess("VIP延展成功");
+            this.vipDialogVisible = false;
+            this.getList();
+          });
+        }
+      });
+    }
   }
 };
 </script>

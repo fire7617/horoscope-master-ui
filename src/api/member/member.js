@@ -42,3 +42,12 @@ export function delMember(memberId) {
     method: 'delete'
   })
 }
+
+// VIP延展
+export function extendVip(data) {
+  return request({
+    url: 'sys_member/extend_vip',
+    method: 'post',
+    data: data
+  })
+} 
