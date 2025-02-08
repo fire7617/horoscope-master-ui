@@ -86,7 +86,7 @@
     "webpack-cli": "^4.10.0"
   },
   "engines": {
-    "node": ">=8.9",
+    "node": "16.x",
     "npm": ">= 3.0.0"
   },
   "browserslist": [

@@ -7,6 +7,25 @@
       <el-form-item label="會員名稱" prop="nickname">
         <el-input v-model="queryParams.nickname" placeholder="請輸入會員名稱" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+      <el-form-item label="郵箱" prop="email">
+        <el-input
+          v-model="queryParams.email"
+          placeholder="請輸入郵箱"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="註冊時間">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="開始日期"
+          end-placeholder="結束日期"
+          value-format="yyyy-MM-dd"
+          :picker-options="pickerOptions"
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -225,12 +244,22 @@ export default {
       title: "",
       // 是否顯示彈出層
       open: false,
+      // 日期範圍
+      dateRange: [],
       // 查詢參數
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         userName: undefined,
-        nickname: undefined
+        nickname: undefined,
+        email: undefined,
+        sex: undefined,
+        bloodType: undefined,
+        zodiacSign: undefined,
+        workStatus: undefined,
+        relationshipStatus: undefined,
+        beginTime: undefined,
+        endTime: undefined
       },
       // 表單參數
       form: {},
@@ -297,9 +326,31 @@ export default {
       },
       // 日期選擇器配置
       pickerOptions: {
-        disabledDate(time) {
-          return time.getTime() < Date.now() - 8.64e7; // 禁用今天以前的日期
-        }
+        shortcuts: [{
+          text: '最近一週',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近一個月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近三個月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+            picker.$emit('pick', [start, end]);
+          }
+        }]
       }
     };
   },
@@ -310,6 +361,15 @@ export default {
     /** 查詢會員列表 */
     getList() {
       this.loading = true;
+      // 處理日期範圍
+      if (this.dateRange && this.dateRange.length > 0) {
+        this.queryParams.beginTime = this.dateRange[0];
+        this.queryParams.endTime = this.dateRange[1];
+      } else {
+        this.queryParams.beginTime = undefined;
+        this.queryParams.endTime = undefined;
+      }
+      
       listMember(this.queryParams).then(response => {
         this.memberList = response.rows;
         this.total = response.total;
@@ -346,6 +406,7 @@ export default {
     },
     /** 重置按鈕操作 */
     resetQuery() {
+      this.dateRange = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
