@@ -1,16 +1,40 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      
+      <el-form-item label="創建時間">
+        <el-date-picker
+          v-model="dateRange"
+          size="small"
+          type="daterange"
+          start-placeholder="開始日期"
+          end-placeholder="結束日期"
+        ></el-date-picker>
+      </el-form-item>
+
+      <el-form-item label="類型" prop="type">
+        <el-select v-model="queryParams.type" placeholder="請選擇類型" clearable>
+          <el-option
+            v-for="item in typeOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+      </el-form-item>
+
       <el-form-item label="AI" prop="ai">
-        <el-select v-model="queryParams.ai" @change="handleQuery">
+        <el-select v-model="queryParams.ai">
           <el-option label="預設" value="0"></el-option>
           <el-option label="GoogleMap" value="1"></el-option>
           <el-option label="Plexity" value="2"></el-option>
         </el-select>
       </el-form-item>
+
       <el-form-item label="關鍵字" prop="keyword">
-        <el-input v-model="queryParams.keyword" placeholder="請輸入關鍵字" clearable />
+        <el-input v-model="queryParams.keyword" placeholder="請輸入關鍵字" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -35,7 +59,7 @@
 
     <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="ID" align="center" prop="id" />
+      <el-table-column label="ID" align="center" prop="id" width="80" />
       <el-table-column label="類型" align="center" prop="type" show-overflow-tooltip>
         <template slot-scope="scope">
           <span v-if="scope.row.type === 0">綜合</span>
@@ -50,9 +74,9 @@
           <span v-if="scope.row.type === 9">挑戰</span>
         </template>
       </el-table-column>
-      <el-table-column label="問題" align="left" prop="tw" show-overflow-tooltip/>
+      <el-table-column label="問題" align="left" prop="tw" show-overflow-tooltip width="200" />
       <el-table-column label="解答方向" align="center" prop="direction" />
-      <el-table-column label="描述" align="center" prop="description" show-overflow-tooltip />
+      <el-table-column label="描述" align="center" prop="description" show-overflow-tooltip width="250" />
       <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
         <template slot-scope="scope">
           <span v-if="scope.row.ai === 0">預設</span>
@@ -74,10 +98,10 @@
 
     <!-- 添加或修改對話框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form"  label-width="80px">
+      <el-form ref="form" :model="form" label-width="80px">
         <el-form-item label="類型" prop="type">
           <el-select v-model="form.type" @change="handleChangeType">
-            <el-option v-for="item in typeOption" :key="item.value" :label="item.label" :value="item.value"  placeholder="請輸入類型"/>
+            <el-option v-for="item in typeOption" :key="item.value" :label="item.label" :value="item.value" placeholder="請輸入類型"/>
           </el-select>
         </el-form-item>
         <el-form-item label="問題" prop="tw" required>
@@ -88,14 +112,14 @@
           <el-input v-model="form.direction" placeholder="請輸入解答方向" />
         </el-form-item>
         <el-form-item label="AI 類型" prop="ai">  
-              <el-select v-model="form.ai" @change="handleChangeType">
-                <el-option label="預設" value="0"></el-option>
-                <el-option label="GoogleMap" value="1"></el-option>
-                <el-option label="Plexity" value="2"></el-option>
-              </el-select>
+          <el-select v-model="form.ai" @change="handleChangeType">
+            <el-option label="預設" value="0"></el-option>
+            <el-option label="GoogleMap" value="1"></el-option>
+            <el-option label="Plexity" value="2"></el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item label="描途" prop="description">  
-              <el-input type="textarea" v-model="form.description" placeholder="請輸入描述" />
+        <el-form-item label="提示詞" prop="description">  
+          <el-input type="textarea" v-model="form.description" placeholder="請輸入描述" />
         </el-form-item>
       </el-form>
 
@@ -141,6 +165,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         ai: '',
+        type: undefined,
         keyword: '',
       },
       // 大類選項
@@ -170,6 +195,19 @@ export default {
       rules: {
         
       },
+      dateRange: [],
+      typeOptions: [
+        { value: 0, label: '綜合' },
+        { value: 1, label: '家庭' },
+        { value: 2, label: '愛情' },
+        { value: 3, label: '人際' },
+        { value: 4, label: '健康' },
+        { value: 5, label: '金錢' },
+        { value: 6, label: '學事業' },
+        { value: 7, label: '旅行' },
+        { value: 8, label: '第六感' },
+        { value: 9, label: '挑戰' },
+      ],
     };
   },
   created() {
@@ -182,10 +220,18 @@ export default {
     /** 查詢運勢結果列表 */
     getList() {
       this.loading = true;
-      listSuggestion(this.queryParams).then(response => {
+      const query = {
+        ...this.queryParams,
+        beginTime: this.dateRange[0],
+        endTime: this.dateRange[1],
+      };
+      listSuggestion(query).then(response => {
         this.list = response.rows;
         this.total = response.total;
         this.loading = false;
+      }).catch(error => {
+        this.loading = false;
+        this.$message.error('獲取數據失敗: ' + error.message);
       });
     },
     // 取消按鈕
@@ -226,7 +272,14 @@ export default {
     },
     /** 重置按鈕操作 */
     resetQuery() {
-      this.resetForm("queryForm");
+      this.dateRange = [];
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 10,
+        ai: '',
+        type: undefined,
+        keyword: '',
+      };
       this.handleQuery();
     },
     // 多選框選中數據

@@ -8,7 +8,6 @@ function resolve(dir) {
 const CompressionPlugin = require('compression-webpack-plugin')
 
 const name = process.env.VUE_APP_TITLE || '星座後臺管理系統' // 網頁標題
-
 const port = process.env.port || process.env.npm_config_port || 80 // 端口
 
 // vue.config.js 配置說明
@@ -33,9 +32,8 @@ module.exports = {
     port: port,
     open: true,
     proxy: {
-      // detail: https://cli.vuejs.org/config/#devserver-proxy
       [process.env.VUE_APP_BASE_API]: {
-        target: `http://horoscope.local:8080`,
+        target: process.env.VUE_APP_API_URL, // 改用環境變數
         changeOrigin: true,
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
