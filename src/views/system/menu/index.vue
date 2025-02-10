@@ -51,7 +51,7 @@
     <el-table
       v-if="refreshTable"
       v-loading="loading"
-      :data="menuList"
+      :data="sortedMenuList"
       row-key="menuId"
       :default-expand-all="isExpandAll"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
@@ -323,6 +323,11 @@ export default {
       }
     };
   },
+  computed: {
+    sortedMenuList() {
+      return this.menuList.sort((a, b) => a.orderNum - b.orderNum);
+    }
+  },
   created() {
     this.getList();
   },
@@ -335,7 +340,7 @@ export default {
     getList() {
       this.loading = true;
       listMenu(this.queryParams).then(response => {
-        this.menuList = this.handleTree(response.data, "menuId");
+        this.menuList = response.data;
         this.loading = false;
       });
     },
