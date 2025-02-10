@@ -11,7 +11,6 @@ function resolve(dir) {
 }
 
 const name = process.env.VUE_APP_TITLE || '星座後臺管理系統'
-const port = process.env.port || process.env.npm_config_port || 8080
 
 // vue.config.js 配置說明
 //官方vue.config.js 參考文檔 https://cli.vuejs.org/zh/config/#css-loaderoptions
@@ -31,18 +30,36 @@ module.exports = {
   productionSourceMap: false,
   // webpack-dev-server 相關配置
   devServer: {
-    host: host,
-    port: port,
+    // 監聽的主機與埠號，由 .env 取得或使用預設值
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.port || 1024,
     open: true,
     proxy: {
+      // 條件：所有以 VUE_APP_BASE_API 開頭的請求都將被代理
+      // 如果在 .env.development 中設定 VUE_APP_BASE_API 為 "/"
+      // 那麼所有請求 URL 如 "/xxx" 都會符合這個條件
       [process.env.VUE_APP_BASE_API]: {
+        // 代理的目標伺服器：從 .env 中取得，例如 https://startrips.net
         target: process.env.VUE_APP_API_URL,
+        // changeOrigin: true 代表修改請求來源，讓目標伺服器以為請求是直接從它那邊來的，通常用在跨域的情況。
         changeOrigin: true,
+        // pathRewrite 的作用是重寫（或過濾）URL 路徑：
+        // 這裡的設定是將 URL 開頭符合 '^' + VUE_APP_BASE_API（也就是以 VUE_APP_BASE_API 為前綴）的部分移除，
+        // 這樣轉發到目標伺服器的路徑就不包含這個前綴。
+        // 例如：如果 VUE_APP_BASE_API 為 '/'，那麼 '^/' 表示移除開頭的 '/'，
+        // 如果 VUE_APP_BASE_API 設定為 '/api'，則 '^/api' 會被移除。
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
+        },
+        // 當發送請求前，就印出最終的代理目標 URL
+        onProxyReq(proxyReq, req, res) {
+          console.log(
+            `Proxying request: ${process.env.VUE_APP_API_URL}${req.url}`
+          );
         }
       }
     },
+    // 此設定允許在某些情況下忽略 host 的檢查，避免一些限制問題
     disableHostCheck: true
   },
   css: {
