@@ -126,11 +126,11 @@ export default {
       if (this.captchaEnabled) {
         getCodeImg().then(res => {
           // 印出後端回傳的完整資料格式，確認資料在哪一層
-          console.log("Captcha API 回傳:", res);
+          // console.log("Captcha API 回傳:", res);
           // 如果 API 原本回傳的是完整回應（response），那麼圖片資料應位於 res.data.img
           if (res && res.data && res.data.img) {
             this.codeUrl = res.data.img;
-            console.log("生成的驗證碼 URL:", this.codeUrl);
+            // console.log("生成的驗證碼 URL:", this.codeUrl);
             // 假設 uuid 在 res.data 中存在（如果沒有，請依照 API 的設計修改）
             this.loginForm.uuid = res.data.uuid || res.data.key;
           } else {
