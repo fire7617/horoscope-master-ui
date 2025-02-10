@@ -273,6 +273,12 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 添加版本號顯示 -->
+    <div class="version-info">
+      <span>v{{ version }}</span>
+      <span class="environment-badge">{{ environment }}</span>
+    </div>
   </div>
 </template>
 
@@ -342,6 +348,22 @@ export default {
           children: children.length > 0 ? children : undefined
         };
       });
+    },
+    version() {
+      return process.env.VERSION || '1.0.0'
+    },
+    environment() {
+      const env = process.env.VUE_APP_MODE || process.env.NODE_ENV
+      switch(env) {
+        case 'development':
+          return 'Dev'
+        case 'staging':
+          return 'UAT'
+        case 'production':
+          return 'Prod'
+        default:
+          return 'Dev'
+      }
     }
   },
   created() {
@@ -505,5 +527,21 @@ export default {
 <style scoped>
 .table-expand {
   padding: 0 20px;
+}
+
+.version-info {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 12px;
+  color: #909399;
+  z-index: 100;
+
+  .environment-badge {
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: rgba(144, 147, 153, 0.1);
+    border-radius: 4px;
+  }
 }
 </style>

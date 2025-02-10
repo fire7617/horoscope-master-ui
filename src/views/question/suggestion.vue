@@ -131,12 +131,6 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
-
-    <!-- 添加版本號和環境信息 -->
-    <div class="version-info">
-      <span>v{{ version }}</span>
-      <span class="environment-badge">{{ environment }}</span>
-    </div>
   </div>
 </template>
 
@@ -360,44 +354,10 @@ export default {
       }).catch(() => { });
     },
   },
-  computed: {
-    version() {
-      return process.env.VERSION || '1.0.0'
-    },
-    environment() {
-      const env = process.env.NODE_ENV
-      switch(env) {
-        case 'development':
-          return 'Dev'
-        case 'staging':
-          return 'UAT'
-        case 'production':
-          return 'Prod'
-        default:
-          return 'Dev'
-      }
-    }
-  },
 };
 </script>
 
 <style lang="scss" scoped>
-.version-info {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  font-size: 12px;
-  color: #909399;
-  z-index: 100;
-
-  .environment-badge {
-    margin-left: 8px;
-    padding: 2px 6px;
-    background: rgba(144, 147, 153, 0.1);
-    border-radius: 4px;
-  }
-}
-
 .test-result-textarea {
   :deep(.el-textarea__inner) {
     font-size: 14px;
