@@ -1,14 +1,17 @@
 'use strict'
 const path = require('path')
+const CompressionPlugin = require('compression-webpack-plugin')
+
+// 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
+const host = process.env.HOST || '0.0.0.0'
+console.log(`當前設定的 host: ${host}`)
 
 function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const CompressionPlugin = require('compression-webpack-plugin')
-
-const name = process.env.VUE_APP_TITLE || '星座後臺管理系統' // 網頁標題
-const port = process.env.port || process.env.npm_config_port || 80 // 端口
+const name = process.env.VUE_APP_TITLE || '星座後臺管理系統'
+const port = process.env.port || process.env.npm_config_port || 8080
 
 // vue.config.js 配置說明
 //官方vue.config.js 參考文檔 https://cli.vuejs.org/zh/config/#css-loaderoptions
@@ -28,12 +31,12 @@ module.exports = {
   productionSourceMap: false,
   // webpack-dev-server 相關配置
   devServer: {
-    host: '0.0.0.0',
+    host: host,
     port: port,
     open: true,
     proxy: {
       [process.env.VUE_APP_BASE_API]: {
-        target: process.env.VUE_APP_API_URL, // 改用環境變數
+        target: process.env.VUE_APP_API_URL,
         changeOrigin: true,
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
@@ -68,8 +71,8 @@ module.exports = {
     ],
   },
   chainWebpack(config) {
-    config.plugins.delete('preload') // TODO: need test
-    config.plugins.delete('prefetch') // TODO: need test
+    config.plugins.delete('preload')
+    config.plugins.delete('prefetch')
 
     // set svg-sprite-loader
     config.module
