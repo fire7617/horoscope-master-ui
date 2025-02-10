@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">星座後臺管理系統</h3>
+      <h3 class="title">{{ title }}</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -53,7 +53,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2024 Mivoo by CFD (全富數位有限公司)</span>
+      <span>Copyright © 2024 Mivoo by GCDM<span class="version-info">v{{ version }}</span><span class="environment-info">{{ environment }}</span></span>
     </div>
   </div>
 </template>
@@ -91,6 +91,23 @@ export default {
       register: false,
       redirect: undefined
     };
+  },
+  computed: {
+    title() {
+      return process.env.VUE_APP_TITLE || 'Mivoo 後臺管理系統'
+    },
+    version() {
+      return process.env.VERSION || '1.0.0'
+    },
+    environment() {
+      const env = process.env.NODE_ENV;
+      const envMap = {
+        'development': 'Dev',
+        'staging': 'UAT',
+        'production': 'Prod'
+      };
+      return envMap[env] || 'Dev';
+    }
   },
   watch: {
     $route: {
@@ -220,6 +237,14 @@ export default {
   font-family: Arial;
   font-size: 12px;
   letter-spacing: 1px;
+
+  .version-info,
+  .environment-info {
+    margin-left: 10px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
 }
 .login-code-img {
   height: 38px;

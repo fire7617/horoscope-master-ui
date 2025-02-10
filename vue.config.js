@@ -1,10 +1,13 @@
 'use strict'
 const path = require('path')
 const CompressionPlugin = require('compression-webpack-plugin')
+const webpack = require('webpack')
 
 // 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
 const host = process.env.HOST || '0.0.0.0'
+const version = '1.0.0'
 console.log(`當前設定的 host: ${host}`)
+console.log(`當前版本號: ${version}`)
 
 function resolve(dir) {
   return path.join(__dirname, dir)
@@ -84,6 +87,9 @@ module.exports = {
         filename: '[path].gz[query]',   // 壓縮後的文件名
         algorithm: 'gzip',              // 使用gzip壓縮
         minRatio: 0.8                   // 壓縮率小於1才會壓縮
+      }),
+      new webpack.DefinePlugin({
+        'process.env.VERSION': JSON.stringify(version)
       })
     ],
   },

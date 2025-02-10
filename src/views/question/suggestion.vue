@@ -2,16 +2,6 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       
-      <el-form-item label="創建時間">
-        <el-date-picker
-          v-model="dateRange"
-          size="small"
-          type="daterange"
-          start-placeholder="開始日期"
-          end-placeholder="結束日期"
-        ></el-date-picker>
-      </el-form-item>
-
       <el-form-item label="類型" prop="type">
         <el-select v-model="queryParams.type" placeholder="請選擇類型" clearable>
           <el-option
@@ -74,8 +64,9 @@
           <span v-if="scope.row.type === 9">挑戰</span>
         </template>
       </el-table-column>
-      <el-table-column label="問題" align="left" prop="tw" show-overflow-tooltip width="200" />
-      <el-table-column label="解答方向" align="center" prop="direction" />
+      <el-table-column label="問題(中)" align="left" prop="tw" show-overflow-tooltip width="200" />
+      <el-table-column label="問題(英)" align="left" prop="en" show-overflow-tooltip width="200" />
+      <el-table-column label="icon樣式" align="center" prop="direction" />
       <el-table-column label="描述（提示詞）" align="center" prop="description" show-overflow-tooltip width="250" />
       <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
         <template slot-scope="scope">
@@ -195,7 +186,6 @@ export default {
       rules: {
         
       },
-      dateRange: [],
       typeOptions: [
         { value: 0, label: '綜合' },
         { value: 1, label: '家庭' },
@@ -222,8 +212,6 @@ export default {
       this.loading = true;
       const query = {
         ...this.queryParams,
-        beginTime: this.dateRange[0],
-        endTime: this.dateRange[1],
       };
       listSuggestion(query).then(response => {
         this.list = response.rows;
@@ -272,7 +260,6 @@ export default {
     },
     /** 重置按鈕操作 */
     resetQuery() {
-      this.dateRange = [];
       this.queryParams = {
         pageNum: 1,
         pageSize: 10,
