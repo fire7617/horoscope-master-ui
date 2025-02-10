@@ -97,6 +97,16 @@ export const constantRoutes = [
         meta: { title: '個人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/question',
+    component: Layout,
+    children: [{
+      path: 'suggestion',
+      name: 'Suggestion',
+      component: () => import('@/views/question/suggestion.vue'),
+      meta: { title: '建議問題', icon: 'form' }
+    }]
   }
 ]
 
