@@ -76,7 +76,7 @@
       </el-table-column>
       <el-table-column label="問題" align="left" prop="tw" show-overflow-tooltip width="200" />
       <el-table-column label="解答方向" align="center" prop="direction" />
-      <el-table-column label="描述" align="center" prop="description" show-overflow-tooltip width="250" />
+      <el-table-column label="描述（提示詞）" align="center" prop="description" show-overflow-tooltip width="250" />
       <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
         <template slot-scope="scope">
           <span v-if="scope.row.ai === 0">預設</span>
