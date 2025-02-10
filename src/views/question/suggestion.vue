@@ -186,6 +186,7 @@ export default {
       rules: {
         
       },
+      dateRange: [],
       typeOptions: [
         { value: 0, label: '綜合' },
         { value: 1, label: '家庭' },
@@ -212,6 +213,8 @@ export default {
       this.loading = true;
       const query = {
         ...this.queryParams,
+        beginTime: this.dateRange[0],
+        endTime: this.dateRange[1],
       };
       listSuggestion(query).then(response => {
         this.list = response.rows;
@@ -231,27 +234,13 @@ export default {
     reset() {
       this.form = {
         id: undefined,
-        subStatus: '0',
-        subType: '0',
-        score: 1,
-        shortReview: {
-          en: '',
-          tw: '',
-        },
-        advantage: {
-          en:'',
-          tw: '',
-        },
-        disadvantage: {
-          en:'',
-          tw: '',
-        },
-        detail: {
-          en:'',
-          tw:'',
-        }
-     };
-      //this.resetForm("form");
+        type: '0',
+        tw: '',
+        en: '',
+        direction: '',
+        ai: '0',
+        description: ''
+      };
     },
     /** 搜索按鈕操作 */
     handleQuery() {
@@ -260,9 +249,10 @@ export default {
     },
     /** 重置按鈕操作 */
     resetQuery() {
+      this.dateRange = [];
       this.queryParams = {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 50,
         ai: '',
         type: undefined,
         keyword: '',
@@ -284,11 +274,25 @@ export default {
     /** 修改按鈕操作 */
     handleUpdate(row) {
       this.reset();
-      const id = row.id || this.ids
+      // 使用行數據的 ID
+      const id = row.id || this.ids;
+      // 從 API 獲取詳細數據
       getSuggestion(id).then(response => {
-        this.form = response.data;
+        console.log('API response:', response.data); // 添加日誌以檢查數據
+        this.form = {
+          id: response.data.id,
+          type: response.data.type.toString(),
+          tw: response.data.tw,
+          en: response.data.en,
+          direction: response.data.direction,
+          ai: response.data.ai.toString(),
+          description: response.data.description || '' // 確保 description 被正確賦值
+        };
         this.open = true;
-        this.title = "修改結果";
+        this.title = "修改建議問題";
+      }).catch(error => {
+        console.error('獲取數據失敗:', error);
+        this.$message.error('獲取數據失敗');
       });
     },
     submitTest: function () {
