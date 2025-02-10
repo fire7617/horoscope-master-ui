@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">星座後臺管理系統</h3>
+      <h3 class="title">{{ title }}</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -53,7 +53,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2021 Talkmate by CFD (全富數位有限公司)</span>
+      <span>Copyright © 2024 Mivoo by GCDM<span class="version-info">v{{ version }}</span><span class="environment-info">{{ environment }}</span></span>
     </div>
   </div>
 </template>
@@ -92,6 +92,23 @@ export default {
       redirect: undefined
     };
   },
+  computed: {
+    title() {
+      return process.env.VUE_APP_TITLE || 'Mivoo 後臺管理系統'
+    },
+    version() {
+      return process.env.VERSION || '1.0.0'
+    },
+    environment() {
+      const env = process.env.NODE_ENV;
+      const envMap = {
+        'development': 'Dev',
+        'staging': 'UAT',
+        'production': 'Prod'
+      };
+      return envMap[env] || 'Dev';
+    }
+  },
   watch: {
     $route: {
       handler: function(route) {
@@ -106,12 +123,21 @@ export default {
   },
   methods: {
     getCode() {
-      if(this.captchaEnabled){
+      if (this.captchaEnabled) {
         getCodeImg().then(res => {
-          if (this.captchaEnabled) {
-            this.codeUrl = "data:image/gif;base64," + res.img;
-            this.loginForm.uuid = res.uuid;
+          // 印出後端回傳的完整資料格式，確認資料在哪一層
+          console.log("Captcha API 回傳:", res);
+          // 如果 API 原本回傳的是完整回應（response），那麼圖片資料應位於 res.data.img
+          if (res && res.data && res.data.img) {
+            this.codeUrl = res.data.img;
+            console.log("生成的驗證碼 URL:", this.codeUrl);
+            // 假設 uuid 在 res.data 中存在（如果沒有，請依照 API 的設計修改）
+            this.loginForm.uuid = res.data.uuid || res.data.key;
+          } else {
+            console.error("Captcha API 回傳的資料不含 base64 圖像字串:", res);
           }
+        }).catch(error => {
+          console.error("取得驗證碼時發生錯誤:", error);
         });
       }
     },
@@ -211,6 +237,14 @@ export default {
   font-family: Arial;
   font-size: 12px;
   letter-spacing: 1px;
+
+  .version-info,
+  .environment-info {
+    margin-left: 10px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
 }
 .login-code-img {
   height: 38px;

@@ -141,7 +141,7 @@
             >{{dict.label}}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="菜單權限">
+        <el-form-item label="目錄權限">
           <el-checkbox v-model="menuExpand" @change="handleCheckedTreeExpand($event, 'menu')">展開/摺疊</el-checkbox>
           <el-checkbox v-model="menuNodeAll" @change="handleCheckedTreeNodeAll($event, 'menu')">全選/全不選</el-checkbox>
           <el-checkbox v-model="form.menuCheckStrictly" @change="handleCheckedTreeConnect($event, 'menu')">父子聯動</el-checkbox>
@@ -238,7 +238,7 @@ export default {
           label: "僅本人數據權限"
         }
       ],
-      // 菜單列表
+      // 目錄列表
       menuOptions: [],
       // 查詢參數
       queryParams: {
@@ -287,22 +287,22 @@ export default {
         }
       );
     },
-    /** 查詢菜單樹結構 */
+    /** 查詢目錄樹結構 */
     getMenuTreeselect() {
       menuTreeselect().then(response => {
         this.menuOptions = response.data;
       });
     },
-    // 所有菜單節點數據
+    // 所有目錄節點數據
     getMenuAllCheckedKeys() {
-      // 目前被選中的菜單節點
+      // 目前被選中的目錄節點
       let checkedKeys = this.$refs.menu.getCheckedKeys();
-      // 半選中的菜單節點
+      // 半選中的目錄節點
       let halfCheckedKeys = this.$refs.menu.getHalfCheckedKeys();
       checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
       return checkedKeys;
     },
-    /** 根據角色ID查詢菜單樹結構 */
+    /** 根據角色ID查詢目錄樹結構 */
     getRoleMenuTreeselect(roleId) {
       return roleMenuTreeselect(roleId).then(response => {
         //this.menuOptions = response.menus;
