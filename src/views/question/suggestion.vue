@@ -112,6 +112,17 @@
         <el-form-item label="提示詞" prop="description">  
           <el-input type="textarea" v-model="form.description" placeholder="請輸入描述" />
         </el-form-item>
+
+        <!-- 新增測試結果顯示區域 -->
+        <el-form-item label="測試結果" v-if="testResult">
+          <el-input
+            type="textarea"
+            v-model="testResult"
+            :rows="8"
+            readonly
+            class="test-result-textarea"
+          />
+        </el-form-item>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -204,6 +215,7 @@ export default {
         { value: 8, label: '第六感' },
         { value: 9, label: '挑戰' },
       ],
+      testResult: '',
     };
   },
   created() {
@@ -246,6 +258,7 @@ export default {
         ai: '0',
         description: ''
       };
+      this.testResult = '';
     },
     /** 搜索按鈕操作 */
     handleQuery() {
@@ -300,16 +313,11 @@ export default {
         this.$message.error('獲取數據失敗');
       });
     },
-    submitTest: function () {
+    submitTest() {
       console.log(this.form);
       testSuggestion(this.form).then(response => {
         console.log(response);
-        this.$message({
-          showClose: true,
-          duration: 0,
-          message: response.data.text,
-          type: 'info'
-        });
+        this.testResult = response.data.text;
       });
     },
     /** 提交按鈕 */
@@ -387,6 +395,15 @@ export default {
     padding: 2px 6px;
     background: rgba(144, 147, 153, 0.1);
     border-radius: 4px;
+  }
+}
+
+.test-result-textarea {
+  :deep(.el-textarea__inner) {
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
   }
 }
 </style>
