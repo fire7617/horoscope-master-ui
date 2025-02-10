@@ -1,7 +1,7 @@
 {
-  "name": "ruoyi",
-  "version": "3.8.3",
-  "description": "星座後臺管理系統",
+  "name": "MivooAdmin",
+  "version": "1.0.3",
+  "description": "Mivoo星座後臺管理系統",
   "author": "UC",
   "license": "MIT",
   "scripts": {

@@ -113,11 +113,12 @@
           <el-input type="textarea" v-model="form.description" placeholder="請輸入描述" />
         </el-form-item>
 
-        <!-- 新增測試結果顯示區域 -->
-        <el-form-item label="測試結果" v-if="testResult">
+        <!-- 修改測試結果區域 -->
+        <el-form-item label="立即測試" v-if="testResult || isGenerating">
           <el-input
             type="textarea"
             v-model="testResult"
+            :placeholder="isGenerating ? '生成中請稍候...' : '點擊下方測試按鈕查看結果'"
             :rows="8"
             readonly
             class="test-result-textarea"
@@ -126,7 +127,14 @@
       </el-form>
 
       <div slot="footer" class="dialog-footer">
-        <el-button type="info" @click="submitTest">測試結果</el-button>
+        <el-button 
+          type="info" 
+          @click="submitTest" 
+          :loading="isGenerating"
+          :disabled="isGenerating"
+        >
+          {{ isGenerating ? '生成中...' : '測試結果' }}
+        </el-button>
         <el-button type="primary" @click="submitForm">確 定</el-button>     
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -210,6 +218,7 @@ export default {
         { value: 9, label: '挑戰' },
       ],
       testResult: '',
+      isGenerating: false,
     };
   },
   created() {
@@ -308,10 +317,17 @@ export default {
       });
     },
     submitTest() {
-      console.log(this.form);
+      this.isGenerating = true;
+      this.testResult = '生成中請稍候...';
+      
       testSuggestion(this.form).then(response => {
         console.log(response);
         this.testResult = response.data.text;
+      }).catch(error => {
+        this.$message.error('生成失敗：' + error.message);
+        this.testResult = '';
+      }).finally(() => {
+        this.isGenerating = false;
       });
     },
     /** 提交按鈕 */
@@ -354,16 +370,15 @@ export default {
       }).catch(() => { });
     },
   },
+  computed: {
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .test-result-textarea {
-  :deep(.el-textarea__inner) {
-    font-size: 14px;
-    line-height: 1.6;
-    background-color: #f8f9fa;
-    border-color: #e9ecef;
+  ::v-deep .el-textarea__inner {
+    background-color: #f5f7fa;
   }
 }
 </style>
