@@ -1,10 +1,10 @@
 module.exports = {
     apps: [
     {
-        name: 'mivoo-admin-dev',
-        script: 'yarn',
+        name: 'mivoo-admin',
+        script: '/usr/local/bin/yarn',
         args: 'dev',
-        interpreter: 'bash',
+        interpreter: 'none',
         env: {
             NODE_ENV: 'development'
         }

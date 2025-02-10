@@ -18,7 +18,7 @@ import Layout from '@/layout'
  * name:'router-name'               // 設定路由的名字，一定要填寫不然使用<keep-alive>時會出現各種問題
  * query: '{"id": 1, "name": "ry"}' // 訪問路由的默認傳遞參數
  * roles: ['admin', 'common']       // 訪問路由的角色權限
- * permissions: ['a:a:a', 'b:b:b']  // 訪問路由的菜單權限
+ * permissions: ['a:a:a', 'b:b:b']  // 訪問路由的目錄權限
  * meta : {
     noCache: true                   // 如果設置為true，則不會被 <keep-alive> 緩存(默認 false)
     title: 'title'                  // 設置該路由在側邊欄和麵包屑中展示的名字

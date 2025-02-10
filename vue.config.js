@@ -10,7 +10,7 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = process.env.VUE_APP_TITLE || '星座後臺管理系統'
+const name = process.env.VUE_APP_TITLE || 'Mivoo 後臺管理系統'
 
 // vue.config.js 配置說明
 //官方vue.config.js 參考文檔 https://cli.vuejs.org/zh/config/#css-loaderoptions

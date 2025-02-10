@@ -163,7 +163,7 @@ export default {
       // 查詢參數
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 50,
         ai: '',
         type: undefined,
         keyword: '',
