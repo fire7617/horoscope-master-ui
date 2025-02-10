@@ -43,7 +43,9 @@
           icon="el-icon-sort"
           size="mini"
           @click="toggleExpandAll"
-        >展開/摺疊</el-button>
+          :loading="loading"
+          :disabled="!menuList.length"
+        >{{ isExpandAll ? '摺疊' : '展開' }}</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -53,7 +55,7 @@
       v-loading="loading"
       :data="sortedMenuList"
       row-key="menuId"
-      :default-expand-all="isExpandAll"
+      :expand-row-keys="expandedKeys"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
       <el-table-column prop="menuName" label="菜單名稱" :show-overflow-tooltip="true" width="160"></el-table-column>
@@ -320,16 +322,39 @@ export default {
         path: [
           { required: true, message: "路由地址不能為空", trigger: "blur" }
         ]
-      }
+      },
+      expandedKeys: [], // 當前展開的行的 keys
     };
   },
   computed: {
     sortedMenuList() {
-      return this.menuList.sort((a, b) => a.orderNum - b.orderNum);
+      // 先過濾出頂層菜單（parentId 為 0 的項目）
+      const topLevelMenus = this.menuList.filter(menu => menu.parentId === 0);
+      // 對頂層菜單按 orderNum 排序
+      return topLevelMenus.sort((a, b) => a.orderNum - b.orderNum).map(menu => {
+        // 找出該頂層菜單的所有子菜單
+        const children = this.menuList
+          .filter(item => item.parentId === menu.menuId)
+          .sort((a, b) => a.orderNum - b.orderNum);
+        
+        return {
+          ...menu,
+          children: children.length > 0 ? children : undefined
+        };
+      });
     }
   },
   created() {
     this.getList();
+  },
+  mounted() {
+    // 確保初始狀態為摺疊
+    this.$nextTick(() => {
+      this.refreshTable = false;
+      setTimeout(() => {
+        this.refreshTable = true;
+      }, 0);
+    });
   },
   methods: {
     // 選擇圖標
@@ -341,6 +366,8 @@ export default {
       this.loading = true;
       listMenu(this.queryParams).then(response => {
         this.menuList = response.data;
+        this.expandedKeys = []; // 確保載入數據後是摺疊狀態
+        this.isExpandAll = false; // 重置展開狀態
         this.loading = false;
       });
     },
@@ -408,11 +435,21 @@ export default {
     },
     /** 展開/摺疊操作 */
     toggleExpandAll() {
-      this.refreshTable = false;
-      this.isExpandAll = !this.isExpandAll;
-      this.$nextTick(() => {
-        this.refreshTable = true;
+      const icons = document.querySelectorAll('.el-table__expand-icon');
+      icons.forEach(icon => {
+        // 如果圖標未展開（不包含 el-table__expand-icon--expanded 類），則點擊它
+        if (this.isExpandAll) {
+          if (icon.classList.contains('el-table__expand-icon--expanded')) {
+            icon.click();
+          }
+        } else {
+          if (!icon.classList.contains('el-table__expand-icon--expanded')) {
+            icon.click();
+          }
+        }
       });
+      
+      this.isExpandAll = !this.isExpandAll;
     },
     /** 修改按鈕操作 */
     handleUpdate(row) {
@@ -464,3 +501,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.table-expand {
+  padding: 0 20px;
+}
+</style>

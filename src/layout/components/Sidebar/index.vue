@@ -20,6 +20,11 @@
                 />
             </el-menu>
         </el-scrollbar>
+        <div class="version-container" :style="{ backgroundColor: settings.sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground }">
+            <span class="version-text" :style="{ color: settings.sideTheme === 'theme-dark' ? variables.menuColor : variables.menuLightColor }">
+                v{{ version }}<span class="environment-badge">{{ environment }}</span>
+            </span>
+        </div>
     </div>
 </template>
 
@@ -51,7 +56,43 @@ export default {
         },
         isCollapse() {
             return !this.sidebar.opened;
+        },
+        version() {
+            return process.env.VERSION || '1.0.0'
+        },
+        environment() {
+            const env = process.env.NODE_ENV;
+            const envMap = {
+                'development': 'Dev',
+                'staging': 'UAT',
+                'production': 'Prod'
+            };
+            return envMap[env] || 'Dev';
         }
     }
 };
 </script>
+
+<style lang="scss" scoped>
+.version-container {
+    position: fixed;
+    bottom: 0;
+    width: inherit;
+    padding: 8px 16px;
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+
+    .version-text {
+        opacity: 0.7;
+        
+        .environment-badge {
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+    }
+}
+</style>

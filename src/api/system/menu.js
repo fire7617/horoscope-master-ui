@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查詢菜單列表
+// 查詢目錄列表
 export function listMenu(query) {
   return request({
     url: 'sys_menu/get_menu_list',
@@ -9,7 +9,7 @@ export function listMenu(query) {
   })
 }
 
-// 查詢菜單詳細
+// 查詢目錄詳細
 export function getMenu(menuId) {
   return request({
     url: 'sys_menu/get_menu/' + menuId,
@@ -17,7 +17,7 @@ export function getMenu(menuId) {
   })
 }
 
-// 查詢菜單下拉樹結構
+// 查詢目錄下拉樹結構
 export function treeselect() {
   return request({
     url: 'sys_menu/select_menu_tree',
@@ -25,7 +25,7 @@ export function treeselect() {
   })
 }
 
-// 根據角色ID查詢菜單下拉樹結構
+// 根據角色ID查詢目錄下拉樹結構
 export function roleMenuTreeselect(roleId) {
   return request({
     url: 'sys_menu/get_menu_list_by_roleId/' + roleId,
@@ -33,7 +33,7 @@ export function roleMenuTreeselect(roleId) {
   })
 }
 
-// 新增菜單
+// 新增目錄
 export function addMenu(data) {
   return request({
     url: 'sys_menu/update_menu',
@@ -42,7 +42,7 @@ export function addMenu(data) {
   })
 }
 
-// 修改菜單
+// 修改目錄
 export function updateMenu(data) {
   return request({
     url: 'sys_menu/update_menu',
@@ -51,7 +51,7 @@ export function updateMenu(data) {
   })
 }
 
-// 刪除菜單
+// 刪除目錄
 export function delMenu(menuId) {
   return request({
     url: 'sys_menu/delete_menu/' + menuId,

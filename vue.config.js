@@ -1,16 +1,19 @@
 'use strict'
 const path = require('path')
 const CompressionPlugin = require('compression-webpack-plugin')
+const webpack = require('webpack')
 
 // 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
 const host = process.env.HOST || '0.0.0.0'
+const version = '1.0.0'
 console.log(`當前設定的 host: ${host}`)
+console.log(`當前版本號: ${version}`)
 
 function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = process.env.VUE_APP_TITLE || '星座後臺管理系統'
+const name = process.env.VUE_APP_TITLE || 'Mivoo 後臺管理系統'
 
 // vue.config.js 配置說明
 //官方vue.config.js 參考文檔 https://cli.vuejs.org/zh/config/#css-loaderoptions
@@ -84,6 +87,9 @@ module.exports = {
         filename: '[path].gz[query]',   // 壓縮後的文件名
         algorithm: 'gzip',              // 使用gzip壓縮
         minRatio: 0.8                   // 壓縮率小於1才會壓縮
+      }),
+      new webpack.DefinePlugin({
+        'process.env.VERSION': JSON.stringify(version)
       })
     ],
   },

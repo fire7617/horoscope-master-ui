@@ -62,8 +62,8 @@
       <el-col :span="12">
         <el-form-item>
           <span slot="label">
-            上級菜單
-            <el-tooltip content="分配到指定菜單下，例如 系統管理" placement="top">
+            上級目錄
+            <el-tooltip content="分配到指定目錄下，例如 系統管理" placement="top">
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
@@ -73,7 +73,7 @@
             :options="menus"
             :normalizer="normalizer"
             :show-count="true"
-            placeholder="請選擇系統菜單"
+            placeholder="請選擇系統目錄"
           />
         </el-form-item>
       </el-col>
@@ -262,7 +262,7 @@ export default {
     }
   },
   methods: {
-    /** 轉換菜單數據結構 */
+    /** 轉換目錄數據結構 */
     normalizer(node) {
       if (node.children && !node.children.length) {
         delete node.children;
