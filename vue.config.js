@@ -3,20 +3,9 @@ const path = require('path')
 const CompressionPlugin = require('compression-webpack-plugin')
 const webpack = require('webpack')
 
-// 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
-const host = process.env.HOST || '0.0.0.0'
-const version = '1.0.5'
-const env = process.env.NODE_ENV || 'development'
-
-console.log(`當前設定的 host: ${host}`)
-console.log(`當前版本號: ${version}`)
-console.log(`當前環境: ${env}`)
-
 function resolve(dir) {
   return path.join(__dirname, dir)
 }
-
-const name = process.env.VUE_APP_TITLE || 'Mivoo 後臺管理系統'
 
 // vue.config.js 配置說明
 //官方vue.config.js 參考文檔 https://cli.vuejs.org/zh/config/#css-loaderoptions
@@ -32,34 +21,8 @@ module.exports = {
   assetsDir: 'static',
   // 是否開啟eslint保存檢測，有效值：ture | false | 'error'
   lintOnSave: process.env.NODE_ENV === 'development',
-  // 如果你不需要生產環境的 source map，可以將其設置為 false 以加速生產環境構建。cd
+  // 如果你不需要生產環境的 source map，可以將其設置為 false 以加速生產環境構建。
   productionSourceMap: false,
-  // webpack-dev-server 相關配置
-  devServer: {
-    // 監聽的主機與埠號，由 .env 取得或使用預設值
-    host: process.env.HOST || '0.0.0.0',
-    port: process.env.port || 1024,
-    open: true,
-    // 只在開發環境使用代理
-    ...(process.env.NODE_ENV === 'development' ? {
-      proxy: {
-        [process.env.VUE_APP_BASE_API]: {
-          target: process.env.VUE_APP_API_URL,
-          changeOrigin: true,
-          pathRewrite: {
-            ['^' + process.env.VUE_APP_BASE_API]: ''
-          },
-          onProxyReq(proxyReq, req, res) {
-            console.log(
-              `Proxying request: ${process.env.VUE_APP_API_URL}${req.url}`
-            );
-          }
-        }
-      }
-    } : {}),
-    // 此設定允許在某些情況下忽略 host 的檢查，避免一些限制問題
-    disableHostCheck: true
-  },
   css: {
     loaderOptions: {
       sass: {
@@ -68,7 +31,7 @@ module.exports = {
     }
   },
   configureWebpack: {
-    name: name,
+    name: process.env.VUE_APP_TITLE,
     resolve: {
       alias: {
         '@': resolve('src')
@@ -84,7 +47,7 @@ module.exports = {
         minRatio: 0.8                   // 壓縮率小於1才會壓縮
       }),
       new webpack.DefinePlugin({
-        'process.env.VERSION': JSON.stringify(version)
+        'process.env.VERSION': JSON.stringify(process.env.npm_package_version)
       })
     ],
   },
