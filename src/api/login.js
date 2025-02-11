@@ -9,7 +9,7 @@ export function login(username, password, code, uuid) {
     uuid
   }
   return request({
-    url: '/api/sys_user/login',
+    url: '/sys_user/login',
     headers: {
       isToken: false
     },
@@ -21,7 +21,7 @@ export function login(username, password, code, uuid) {
 // 註冊方法
 export function register(data) {
   return request({
-    url: '/api/sys_user/register',
+    url: '/sys_user/register',
     headers: {
       isToken: false
     },
@@ -33,7 +33,7 @@ export function register(data) {
 // 獲取用戶詳細信息
 export function getInfo() {
   return request({
-    url: '/api/sys_user/getInfo',
+    url: '/sys_user/getInfo',
     method: 'get'
   })
 }
@@ -41,7 +41,7 @@ export function getInfo() {
 // 退出方法
 export function logout() {
   return request({
-    url: '/api/sys_user/logout',
+    url: '/sys_user/logout',
     method: 'post'
   })
 }
