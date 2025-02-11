@@ -221,7 +221,7 @@ export default {
   dicts: ['sys_normal_disable'],
   data() {
     return {
-      open: false,
+      dialogVisible: false,
       showSearch: true,
       loading: false,
       list: [],
@@ -291,7 +291,18 @@ export default {
       }
     };
   },
+  computed: {
+    open: {
+      get() {
+        return this.dialogVisible;
+      },
+      set(value) {
+        this.dialogVisible = value;
+      }
+    }
+  },
   created() {
+    this.$set(this, 'open', false);
     this.getList();
   },
   methods: {
