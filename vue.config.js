@@ -5,7 +5,7 @@ const webpack = require('webpack')
 
 // 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
 const host = process.env.HOST || '0.0.0.0'
-const version = '1.0.4'
+const version = '1.0.5'
 const env = process.env.NODE_ENV || 'development'
 
 console.log(`當前設定的 host: ${host}`)
