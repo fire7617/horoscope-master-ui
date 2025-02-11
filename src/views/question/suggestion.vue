@@ -56,6 +56,51 @@
       <el-table-column label="問題(英)" align="left" prop="en" show-overflow-tooltip width="200" />
       <el-table-column label="ICON" align="center" prop="direction" />
       <el-table-column label="提示詞" align="center" prop="description" show-overflow-tooltip width="250" />
+      <el-table-column label="限制條件" align="center" width="300">
+        <template slot-scope="scope">
+          <template v-if="scope.row.condition && scope.row.condition.length">
+            <div v-for="(cond, index) in scope.row.condition" :key="index" style="margin-bottom: 5px;">
+              <!-- 性別 -->
+              <el-tag 
+                v-if="cond.sex !== ''" 
+                size="mini" 
+                type="info"
+                style="margin-right: 5px;"
+              >
+                {{ cond.sex === -1 ? '性別不限' : sexOptions[cond.sex] }}
+              </el-tag>
+              <!-- 學事業狀態 -->
+              <el-tag 
+                v-if="cond.work_status !== ''" 
+                size="mini" 
+                type="success"
+                style="margin-right: 5px;"
+              >
+                {{ cond.work_status === -1 ? '學事業不限' : suggestionConfig.horoscopeTypeOption[6][cond.work_status] }}
+              </el-tag>
+              <!-- 感情狀態 -->
+              <el-tag 
+                v-if="cond.relationship_status !== ''" 
+                size="mini" 
+                type="warning"
+                style="margin-right: 5px;"
+              >
+                {{ cond.relationship_status === -1 ? '感情不限' : suggestionConfig.horoscopeTypeOption[2][cond.relationship_status] }}
+              </el-tag>
+              <!-- 血型 -->
+              <el-tag 
+                v-if="cond.blood_type !== ''" 
+                size="mini" 
+                type="danger"
+                style="margin-right: 5px;"
+              >
+                {{ cond.blood_type === -1 ? '血型不限' : bloodTypeOptions[cond.blood_type] }}
+              </el-tag>
+            </div>
+          </template>
+          <span v-else>無限制條件</span>
+        </template>
+      </el-table-column>
       <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
         <template slot-scope="scope">
           <span v-if="scope.row.ai === 0">預設</span>
@@ -73,10 +118,16 @@
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" :visible.sync="open" width="1000px" append-to-body>
-      <el-form ref="form" :model="form" label-width="80px">
+    <el-dialog 
+      :title="title" 
+      :visible.sync="open" 
+      width="1000px" 
+      append-to-body
+      @close="cancel"
+    >
+      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
         <el-form-item label="類型" prop="type">
-          <el-select v-model="form.type">
+          <el-select v-model="form.type" placeholder="請選擇類型">
             <el-option v-for="item in typeOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
@@ -170,6 +221,7 @@ export default {
   dicts: ['sys_normal_disable'],
   data() {
     return {
+      open: false,
       showSearch: true,
       loading: false,
       list: [],
@@ -201,7 +253,7 @@ export default {
       ],
       form: {
         id: undefined,
-        type: "0",
+        type: undefined,
         tw: "",
         en: "",
         direction: "",
@@ -231,7 +283,12 @@ export default {
           value: String(index),
           label: item
         }))
-      ]
+      ],
+      rules: {
+        type: [
+          { required: true, message: '請選擇問題類型', trigger: 'change' }
+        ]
+      }
     };
   },
   created() {
@@ -261,7 +318,7 @@ export default {
     reset() {
       this.form = {
         id: undefined,
-        type: "0",
+        type: undefined,
         tw: "",
         en: "",
         direction: "",
