@@ -5,8 +5,8 @@ const webpack = require('webpack')
 
 // 從 .env 取得 host，若未指定則預設為 '0.0.0.0'
 const host = process.env.HOST || '0.0.0.0'
-const version = '1.0.3'
-const env = process.env.NODE_ENV || 'development'
+const version = '1.0.1'
+const env = process.env.VUE_APP_MODE || process.env.NODE_ENV || 'development'
 
 console.log(`當前設定的 host: ${host}`)
 console.log(`當前版本號: ${version}`)
@@ -79,8 +79,9 @@ module.exports = {
     name: name,
     resolve: {
       alias: {
-        '@': resolve('src')
-      }
+        '@': path.resolve(__dirname, 'src')
+      },
+      extensions: ['.js', '.vue', '.json']
     },
     plugins: [
       // http://doc.ruoyi.vip/ruoyi-vue/other/faq.html#使用gzip解壓縮靜態文件
