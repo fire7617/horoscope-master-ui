@@ -99,8 +99,8 @@
           <el-tag>中文</el-tag><el-input v-model="form.tw" placeholder="請輸入中文問題" />
           <el-tag>英文</el-tag><el-input v-model="form.en" placeholder="請輸入英文問題" />
         </el-form-item>
-        <el-form-item label="解答方向" prop="direction" required>
-          <el-input v-model="form.direction" placeholder="請輸入解答方向" />
+        <el-form-item label="ICON" prop="direction" required>
+          <el-input v-model="form.direction" placeholder="請選擇APP所使用ICON" />
         </el-form-item>
         <el-form-item label="AI 類型" prop="ai">  
           <el-select v-model="form.ai" @change="handleChangeType">
@@ -133,7 +133,7 @@
           :loading="isGenerating"
           :disabled="isGenerating"
         >
-          {{ isGenerating ? '生成中...' : '測試結果' }}
+          {{ isGenerating ? '生成中...' : '立即測試' }}
         </el-button>
         <el-button type="primary" @click="submitForm">確 定</el-button>     
         <el-button @click="cancel">取 消</el-button>
@@ -173,9 +173,9 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 50,
-        ai: '',
         type: undefined,
         keyword: '',
+        ai: ''
       },
       // 大類選項
       typeOption: [
@@ -231,12 +231,7 @@ export default {
     /** 查詢運勢結果列表 */
     getList() {
       this.loading = true;
-      const query = {
-        ...this.queryParams,
-        beginTime: this.dateRange[0],
-        endTime: this.dateRange[1],
-      };
-      listSuggestion(query).then(response => {
+      listSuggestion(this.queryParams).then(response => {
         this.list = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -270,14 +265,8 @@ export default {
     },
     /** 重置按鈕操作 */
     resetQuery() {
-      this.dateRange = [];
-      this.queryParams = {
-        pageNum: 1,
-        pageSize: 50,
-        ai: '',
-        type: undefined,
-        keyword: '',
-      };
+      this.resetForm("queryForm");
+      this.queryParams.type = undefined;
       this.handleQuery();
     },
     // 多選框選中數據
