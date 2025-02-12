@@ -26,19 +26,12 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:suggestion:add']">新增</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['system:suggestion:edit']">修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:suggestion:remove']">刪除</el-button>
-      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="ID" align="center" prop="id" width="80" />
-      <el-table-column label="類型" align="center" prop="type" show-overflow-tooltip>
+    <el-table v-loading="loading" :data="list">
+      <el-table-column label="ID" align="center" prop="id" width="120" />
+      <el-table-column label="類型" align="center" prop="type" width="120">
         <template slot-scope="scope">
           <span v-if="scope.row.type === 0">綜合</span>
           <span v-else-if="scope.row.type === 1">家庭</span>
@@ -52,13 +45,28 @@
           <span v-else-if="scope.row.type === 9">挑戰</span>
         </template>
       </el-table-column>
-      <el-table-column label="問題(中)" align="left" prop="tw" show-overflow-tooltip width="200" />
-      <el-table-column label="問題(英)" align="left" prop="en" show-overflow-tooltip width="200" />
-      <el-table-column label="ICON" align="center" prop="direction" />
-      <el-table-column label="提示詞" align="center" prop="description" show-overflow-tooltip width="250" />
-      <el-table-column label="限制條件" align="center" width="300">
+      <el-table-column label="ICON" align="center" prop="direction" width="240">
         <template slot-scope="scope">
-          <template v-if="scope.row.condition && scope.row.condition.length">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <span>{{ getDirectionLabel(scope.row.direction) }}</span>
+            <el-image 
+              style="width: 30px; height: 30px; margin-top: 5px;"
+              :src="getImageUrl(scope.row.direction)"
+              :preview-src-list="[getImageUrl(scope.row.direction)]"
+            >
+              <div slot="error" class="image-slot">
+                <i class="el-icon-picture-outline"></i>
+              </div>
+            </el-image>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="問題(中)" align="left" prop="tw" min-width="180" />
+      <el-table-column label="問題(英)" align="left" prop="en" min-width="180" />
+      <el-table-column label="提示詞" align="left" prop="description" min-width="360" show-overflow-tooltip />
+      <el-table-column label="限制條件" align="center" width="180">
+        <template slot-scope="scope">
+          <template v-if="hasValidConditions(scope.row.condition)">
             <div v-for="(cond, index) in scope.row.condition" :key="index" style="margin-bottom: 5px;">
               <!-- 性別 -->
               <el-tag 
@@ -101,17 +109,30 @@
           <span v-else>無限制條件</span>
         </template>
       </el-table-column>
-      <el-table-column label="AI 類型" align="center" show-overflow-tooltip>
+      <el-table-column label="AI" align="center" width="80" show-overflow-tooltip>
         <template slot-scope="scope">
           <span v-if="scope.row.ai === 0">預設</span>
-          <span v-else-if="scope.row.ai === 1">GoogleMap</span>
+          <span v-else-if="scope.row.ai === 1">Map</span>
           <span v-else-if="scope.row.ai === 2">Plexity</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="150">
+      <el-table-column label="操作" align="center" width="120" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:suggestion:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:suggestion:remove']">刪除</el-button>
+          <el-button 
+            size="mini" 
+            type="text" 
+            icon="el-icon-edit" 
+            @click="handleUpdate(scope.row)" 
+            v-hasPermi="['system:suggestion:edit']"
+          >修改</el-button>
+          <el-button 
+            size="mini" 
+            type="text" 
+            icon="el-icon-delete" 
+            class="delete-btn"
+            @click="handleDelete(scope.row)" 
+            v-hasPermi="['system:suggestion:remove']"
+          >刪除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -138,7 +159,44 @@
           <el-input v-model="form.en" placeholder="請輸入英文問題" />
         </el-form-item>
         <el-form-item label="ICON" prop="direction" required>
-          <el-input v-model="form.direction" placeholder="請選擇APP所使用ICON" />
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <el-select 
+              v-model="form.direction" 
+              placeholder="請選擇圖示"
+              filterable
+              style="width: 300px;"
+            >
+              <el-option
+                v-for="item in directionOptions"
+                :key="item.id"
+                :label="`${item.en}（${item.tw}）`"
+                :value="item.en"
+              >
+                <div style="display: flex; align-items: center;">
+                  <el-image 
+                    style="width: 20px; height: 20px; margin-right: 10px;"
+                    :src="getImageUrl(item.key)"
+                  >
+                    <div slot="error" class="image-slot">
+                      <i class="el-icon-picture-outline"></i>
+                    </div>
+                  </el-image>
+                  <span>{{ item.en }}（{{ item.tw }}）</span>
+                </div>
+              </el-option>
+            </el-select>
+
+            <el-image 
+              v-if="form.direction"
+              style="width: 40px; height: 40px;"
+              :src="getImageUrl(form.direction)"
+              :preview-src-list="[getImageUrl(form.direction)]"
+            >
+              <div slot="error" class="image-slot">
+                <i class="el-icon-picture-outline"></i>
+              </div>
+            </el-image>
+          </div>
         </el-form-item>
         <el-form-item label="AI 類型" prop="ai">
           <el-select v-model="form.ai">
@@ -166,15 +224,15 @@
                 <div style="display: flex; align-items: center;">
                   <span style="margin-right: 10px; width: 80px;">性別:</span>
                   <el-select v-model="cond.sex" placeholder="性別" style="width: 200px;">
-                    <el-option label="不限" value="" />
-                    <el-option v-for="(label, key) in sexOptions" :key="key" :label="label" :value="parseInt(key)" />
+                    <el-option label="不限" value="-1" />
+                    <el-option v-for="(label, key) in sexOptions" :key="key" :label="label" :value="key" />
                   </el-select>
                 </div>
                 <div style="display: flex; align-items: center;">
                   <span style="margin-right: 10px; width: 80px;">血型:</span>
                   <el-select v-model="cond.blood_type" placeholder="血型" style="width: 200px;">
-                    <el-option label="不限" value="" />
-                    <el-option v-for="(label, key) in bloodTypeOptions" :key="key" :label="label" :value="parseInt(key)" />
+                    <el-option label="不限" value="-1" />
+                    <el-option v-for="(label, key) in bloodTypeOptions" :key="key" :label="label" :value="key" />
                   </el-select>
                 </div>
                 <div style="display: flex; align-items: center;">
@@ -213,8 +271,17 @@
 </template>
 
 <script>
-import { listSuggestion, getSuggestion, delSuggestion, addSuggestion, updateSuggestion, testSuggestion } from "@/api/question/suggestion";
-import suggestionConfig from "@/config/suggestionConfig";
+import { 
+  listSuggestion, 
+  getSuggestion, 
+  delSuggestion, 
+  addSuggestion, 
+  updateSuggestion, 
+  testSuggestion,
+  suggestionConstants 
+} from "@/api/question/suggestion";
+import { getParams } from "@/api/system/params";
+import suggestionConfigData from "@/config/suggestionConfig";
 
 export default {
   name: "Suggestion",
@@ -226,9 +293,6 @@ export default {
       loading: false,
       list: [],
       total: 0,
-      ids: [],
-      single: true,
-      multiple: true,
       title: "",
       testResult: "",
       isGenerating: false,
@@ -239,56 +303,41 @@ export default {
         keyword: '',
         type: undefined
       },
-      typeOptions: [
-        { value: 0, label: "綜合" },
-        { value: 1, label: "家庭" },
-        { value: 2, label: "愛情" },
-        { value: 3, label: "人際" },
-        { value: 4, label: "健康" },
-        { value: 5, label: "金錢" },
-        { value: 6, label: "學事業" },
-        { value: 7, label: "旅行" },
-        { value: 8, label: "第六感" },
-        { value: 9, label: "挑戰" }
-      ],
+      // 使用常量配置
+      typeOptions: suggestionConstants.typeOptions,
       form: {
-        id: undefined,
-        type: undefined,
-        tw: "",
-        en: "",
-        direction: "",
-        ai: "0",
-        description: "",
+        ...suggestionConstants.defaultForm,
         condition: [
           {
-            sex: "",
-            work_status: "",
-            relationship_status: "",
-            blood_type: ""
+            sex: "-1",
+            work_status: "-1",
+            relationship_status: "-1",
+            blood_type: "-1"
           }
         ]
       },
-      sexOptions: suggestionConfig.sex,
-      bloodTypeOptions: suggestionConfig.bloodType,
+      rules: suggestionConstants.rules,
+      // 其他配置
+      suggestionConfig: suggestionConfigData,
+      sexOptions: suggestionConfigData.sex,
+      bloodTypeOptions: suggestionConfigData.bloodType,
       workStatusOptions: [
-        { value: "", label: "不限" },
-        ...suggestionConfig.horoscopeTypeOption[6].map((item, index) => ({
+        { value: "-1", label: "不限" },
+        ...suggestionConfigData.horoscopeTypeOption[6].map((item, index) => ({
           value: String(index),
           label: item
         }))
       ],
       relationshipStatusOptions: [
-        { value: "", label: "不限" },
-        ...suggestionConfig.horoscopeTypeOption[2].map((item, index) => ({
+        { value: "-1", label: "不限" },
+        ...suggestionConfigData.horoscopeTypeOption[2].map((item, index) => ({
           value: String(index),
           label: item
         }))
       ],
-      rules: {
-        type: [
-          { required: true, message: '請選擇問題類型', trigger: 'change' }
-        ]
-      }
+      directionMap: new Map(),
+      directionOptions: [],
+      directionImageMap: new Map()
     };
   },
   computed: {
@@ -304,12 +353,14 @@ export default {
   created() {
     this.$set(this, 'open', false);
     this.getList();
+    this.getDirectionOptions();
   },
   methods: {
     getList() {
       this.loading = true;
       listSuggestion(this.queryParams)
         .then(response => {
+          console.log('列表資料:', response.rows);
           this.list = response.rows;
           this.total = response.total;
           this.loading = false;
@@ -327,23 +378,7 @@ export default {
       this.reset();
     },
     reset() {
-      this.form = {
-        id: undefined,
-        type: undefined,
-        tw: "",
-        en: "",
-        direction: "",
-        ai: "0",
-        description: "",
-        condition: [
-          {
-            sex: "",
-            work_status: "",
-            relationship_status: "",
-            blood_type: ""
-          }
-        ]
-      };
+      this.form = { ...suggestionConstants.defaultForm };
       this.testResult = "";
     },
     handleQuery() {
@@ -355,11 +390,6 @@ export default {
       this.queryParams.type = undefined;
       this.handleQuery();
     },
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.id);
-      this.single = selection.length !== 1;
-      this.multiple = !selection.length;
-    },
     handleAdd() {
       this.reset();
       this.open = true;
@@ -367,26 +397,42 @@ export default {
     },
     handleUpdate(row) {
       this.reset();
-      const id = row.id || this.ids;
+      const id = row.id;
       getSuggestion(id)
         .then(response => {
+          // 將數字參數映射為對應的顯示文字
+          const mapCondition = (condition) => {
+            return condition.map(cond => ({
+              sex: cond.sex === -1 ? "-1" : String(cond.sex),
+              work_status: cond.work_status === -1 ? "-1" : String(cond.work_status),
+              relationship_status: cond.relationship_status === -1 ? "-1" : String(cond.relationship_status),
+              blood_type: cond.blood_type === -1 ? "-1" : String(cond.blood_type)
+            }));
+          };
+
           this.form = {
             id: response.data.id,
-            type: response.data.type.toString(),
+            type: String(response.data.type),
             tw: response.data.tw,
             en: response.data.en,
             direction: response.data.direction,
-            ai: response.data.ai.toString(),
+            ai: String(response.data.ai),
             description: response.data.description || "",
-            condition: response.data.condition || [
-              {
-                sex: "",
-                work_status: "",
-                relationship_status: "",
-                blood_type: ""
-              }
-            ]
+            condition: response.data.condition && response.data.condition.length > 0
+              ? mapCondition(response.data.condition)
+              : [
+                  {
+                    sex: "-1",
+                    work_status: "-1",
+                    relationship_status: "-1",
+                    blood_type: "-1"
+                  }
+                ]
           };
+
+          console.log('原始數據:', response.data);
+          console.log('轉換後的表單數據:', this.form);
+          
           this.open = true;
           this.title = "修改建議問題";
         })
@@ -412,8 +458,27 @@ export default {
     submitForm() {
       this.$refs.form.validate(valid => {
         if (valid) {
+          // 將顯示文字轉換回數字
+          const getKeyByValue = (obj, value) => {
+            return Object.keys(obj).find(key => obj[key] === value);
+          };
+
+          const submitData = {
+            ...this.form,
+            type: parseInt(this.form.type),
+            ai: parseInt(this.form.ai),
+            condition: this.form.condition.map(cond => ({
+              sex: cond.sex === "-1" ? -1 : parseInt(cond.sex),
+              work_status: cond.work_status === "-1" ? -1 : parseInt(cond.work_status),
+              relationship_status: cond.relationship_status === "-1" ? -1 : parseInt(cond.relationship_status),
+              blood_type: cond.blood_type === "-1" ? -1 : parseInt(cond.blood_type)
+            }))
+          };
+
+          console.log('提交的數據:', submitData);
+
           if (this.form.id != undefined) {
-            updateSuggestion(this.form).then(response => {
+            updateSuggestion(submitData).then(response => {
               if (response.code !== 200) {
                 this.$modal.msgError(response.message);
                 return;
@@ -423,7 +488,7 @@ export default {
               this.getList();
             });
           } else {
-            addSuggestion(this.form).then(response => {
+            addSuggestion(submitData).then(response => {
               if (response.code !== 200) {
                 this.$modal.msgError(response.message);
                 return;
@@ -437,11 +502,11 @@ export default {
       });
     },
     handleDelete(row) {
-      const ids = row.id || this.ids;
+      const id = row.id;
       this.$modal
-        .confirm('是否確認刪除編號為"' + ids + '"的數據項？')
+        .confirm('是否確認刪除編號為"' + id + '"的數據項？')
         .then(() => {
-          return delSuggestion(ids);
+          return delSuggestion(id);
         })
         .then(() => {
           this.getList();
@@ -451,10 +516,10 @@ export default {
     },
     addCondition() {
       this.form.condition.push({
-        sex: "",
-        work_status: "",
-        relationship_status: "",
-        blood_type: ""
+        sex: "-1",
+        work_status: "-1",
+        relationship_status: "-1",
+        blood_type: "-1"
       });
     },
     removeCondition(index) {
@@ -462,6 +527,61 @@ export default {
     },
     handleTypeChange() {
       // 處理類型變更（如需額外邏輯，可在此添加）
+    },
+    // 獲取方位選項
+    getDirectionOptions() {
+      getParams({ type: 'direction' }).then(response => {
+        if (response.success && response.data) {
+          this.directionOptions = response.data;
+          // 建立方位對應 Map
+          this.directionOptions.forEach(item => {
+            this.directionMap.set(item.en, item);
+            // 新增：建立圖片對應關係
+            if (item.en) {
+              this.directionImageMap.set(item.en, item.key);
+            }
+          });
+          console.log('方位映射:', this.directionMap);
+          console.log('圖片映射:', this.directionImageMap);
+        }
+      }).catch(error => {
+        this.$message.error("獲取方位選項失敗：" + error.message);
+      });
+    },
+    // 獲取方位的顯示文字
+    getDirectionLabel(direction) {
+      const item = this.directionMap.get(direction);
+      return item ? `${item.en}（${item.tw}）` : direction;
+    },
+    getImageUrl(direction) {
+      // 檢查 direction 值
+      console.log('當前 direction:', direction);
+      
+      // 檢查 API URL，移除結尾的斜線
+      const baseUrl = (process.env.VUE_APP_API_URL || window.location.origin).replace(/\/$/, '');
+      
+      // 直接使用 direction 作為圖檔名稱
+      const imageUrl = `${baseUrl}/icon/${direction}.png`;
+      console.log('完整圖片路徑:', imageUrl);
+      
+      return imageUrl;
+    },
+    // 檢查是否有有效的條件
+    hasValidConditions(conditions) {
+      if (!conditions || !conditions.length) {
+        return false;
+      }
+      
+      // 檢查是否所有條件的值都為空或 -1
+      return conditions.some(cond => {
+        return Object.values(cond).some(value => 
+          value !== "" && 
+          value !== "-1" && 
+          value !== -1 && 
+          value !== undefined && 
+          value !== null
+        );
+      });
     }
   }
 };
@@ -470,5 +590,33 @@ export default {
 <style lang="scss" scoped>
 .test-result-textarea ::v-deep .el-textarea__inner {
   background-color: #f5f7fa;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 14px;
+}
+
+::v-deep .el-select-dropdown__item {
+  height: auto;
+  padding: 8px;
+}
+
+.delete-btn {
+  color: #f56c6c !important;  /* 使用 Element UI 的危險紅色 */
+  font-weight: 500;  /* 稍微加粗 */
+  margin-left: 10px;  /* 與修改按鈕保持一定距離 */
+}
+
+.delete-btn:hover {
+  color: #ff4949 !important;  /* hover 時的顏色 */
+  background-color: #fef0f0;  /* hover 時的背景色 */
+  border-radius: 2px;  /* 輕微圓角 */
 }
 </style>
