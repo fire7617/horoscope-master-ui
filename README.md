@@ -94,6 +94,9 @@ horoscope-ui
 │   │   │   ├── suggestion.js # 建議管理
 │   │   │   └── topic.js     # 主題管理
 │   │   └── system           # 系統管理相關接口
+│   │       ├── config.js     # 系統配置接口
+│   │       ├── params.js     # 系統參數接口
+│   │       └── ...          # 其他系統接口
 │   ├── assets               # 主題、字體等靜態資源
 │   ├── components           # 全局公用組件
 │   ├── directive           # 全局指令
@@ -118,17 +121,21 @@ horoscope-ui
 2. 組件命名採用大駝峰命名法 (PascalCase)
 3. API 接口統一管理在 api 目錄下
 4. 路由配置統一管理在 router 目錄下
+5. 使用 Element UI 組件庫進行界面開發
+6. 遵循 Vue.js 官方的代碼風格指南
 
 ### Git 規範
 1. 提交前需要通過 lint 檢查
 2. commit message 需要清晰描述改動內容
+3. 建議使用 feature 分支進行功能開發
 
 ## 注意事項
-1. Node.js 版本建議使用 v16.20.2
+1. Node.js 版本必須使用 v16.20.2
 2. 開發環境需要設置 NODE_OPTIONS=--openssl-legacy-provider
 3. 不建議使用 cnpm 安裝依賴
 4. 生產環境構建前需要確認 API 配置
 5. 如果遇到 SSL 相關問題，需要設置 NODE_OPTIONS 環境變量
+6. 建議使用 yarn 作為包管理工具
 
 ## 常見問題
 1. 如果出現 crypto 相關錯誤，請確保設置了正確的 NODE_OPTIONS
@@ -136,10 +143,11 @@ horoscope-ui
 3. 生產環境的接口地址配置在 .env.production 中
 
 ## 版本歷史
-- v1.0.0 - 初始版本
-  - 基礎架構搭建
-  - 問答系統開發
-  - 運勢系統開發
+- v1.0.5 - 當前版本
+  - 完善用戶權限管理
+  - 優化運勢匹配算法
+  - 新增多語系支持
+  - 改進 UI/UX 設計
 
 ## 授權信息
 MIT License
