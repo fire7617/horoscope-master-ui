@@ -8,9 +8,8 @@
       </el-form-item>
       <el-form-item label="AI" prop="ai">
         <el-select v-model="queryParams.ai">
-          <el-option label="預設" value="0"></el-option>
-          <el-option label="GoogleMap" value="1"></el-option>
-          <el-option label="Plexity" value="2"></el-option>
+          <el-option label="ChatGPT" value="0"></el-option>
+          <el-option label="Gemini" value="1"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="關鍵字" prop="keyword">
@@ -111,9 +110,8 @@
       </el-table-column>
       <el-table-column label="AI" align="center" width="80" show-overflow-tooltip>
         <template slot-scope="scope">
-          <span v-if="scope.row.ai === 0">預設</span>
-          <span v-else-if="scope.row.ai === 1">Map</span>
-          <span v-else-if="scope.row.ai === 2">Plexity</span>
+          <span v-if="scope.row.ai === 0">ChatGPT</span>
+          <span v-else-if="scope.row.ai === 1">Gemini</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="120" fixed="right">
@@ -198,12 +196,24 @@
             </el-image>
           </div>
         </el-form-item>
-        <el-form-item label="AI 類型" prop="ai">
+        <el-form-item label="AI 類型" prop="ai" @change="handleAIChange">
           <el-select v-model="form.ai">
-            <el-option label="預設" value="0"></el-option>
-            <el-option label="GoogleMap" value="1"></el-option>
-            <el-option label="Plexity" value="2"></el-option>
+            <el-option label="ChatGPT" value="0"></el-option>
+            <el-option label="Gemini" value="1"></el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item 
+          v-if="form.ai === '1'" 
+          label="搜尋詞" 
+          prop="search_keyword"
+          :rules="[
+            { required: true, message: '請輸入搜尋關鍵字', trigger: 'blur' }
+          ]"
+        >
+          <el-input
+            v-model="form.search_keyword"
+            placeholder="請輸入 Google Map 搜尋關鍵字"
+          />
         </el-form-item>
         <el-form-item label="提示詞" prop="description">
           <el-input
@@ -287,6 +297,14 @@ export default {
   name: "Suggestion",
   dicts: ['sys_normal_disable'],
   data() {
+    // 直接在 data 中構建 typeOptions
+    const buildTypeOptions = () => {
+      return Object.entries(suggestionConfigData.horoscopeType).map(([value, label]) => ({
+        value: String(value),
+        label: label
+      }));
+    };
+
     return {
       dialogVisible: false,
       showSearch: true,
@@ -303,10 +321,11 @@ export default {
         keyword: '',
         type: undefined
       },
-      // 使用常量配置
-      typeOptions: suggestionConstants.typeOptions,
+      // 使用新的 typeOptions 定義
+      typeOptions: buildTypeOptions(),
       form: {
         ...suggestionConstants.defaultForm,
+        search_keyword: "",
         condition: [
           {
             sex: "-1",
@@ -378,7 +397,18 @@ export default {
       this.reset();
     },
     reset() {
-      this.form = { ...suggestionConstants.defaultForm };
+      this.form = {
+        ...suggestionConstants.defaultForm,
+        search_keyword: "",
+        condition: [
+          {
+            sex: "-1",
+            work_status: "-1",
+            relationship_status: "-1",
+            blood_type: "-1"
+          }
+        ]
+      };
       this.testResult = "";
     },
     handleQuery() {
@@ -400,7 +430,6 @@ export default {
       const id = row.id;
       getSuggestion(id)
         .then(response => {
-          // 將數字參數映射為對應的顯示文字
           const mapCondition = (condition) => {
             return condition.map(cond => ({
               sex: cond.sex === -1 ? "-1" : String(cond.sex),
@@ -410,13 +439,15 @@ export default {
             }));
           };
 
+          // 直接使用 String 轉換，因為我們的 typeOptions 已經是正確的格式
           this.form = {
             id: response.data.id,
-            type: String(response.data.type),
+            type: String(response.data.type),  // 直接轉換為字串
             tw: response.data.tw,
             en: response.data.en,
             direction: response.data.direction,
             ai: String(response.data.ai),
+            search_keyword: response.data.search_keyword || "",
             description: response.data.description || "",
             condition: response.data.condition && response.data.condition.length > 0
               ? mapCondition(response.data.condition)
@@ -432,6 +463,7 @@ export default {
 
           console.log('原始數據:', response.data);
           console.log('轉換後的表單數據:', this.form);
+          console.log('類型選項:', this.typeOptions);
           
           this.open = true;
           this.title = "修改建議問題";
@@ -467,6 +499,7 @@ export default {
             ...this.form,
             type: parseInt(this.form.type),
             ai: parseInt(this.form.ai),
+            search_keyword: this.form.ai === "1" ? this.form.search_keyword : undefined,
             condition: this.form.condition.map(cond => ({
               sex: cond.sex === "-1" ? -1 : parseInt(cond.sex),
               work_status: cond.work_status === "-1" ? -1 : parseInt(cond.work_status),
@@ -582,6 +615,11 @@ export default {
           value !== null
         );
       });
+    },
+    handleAIChange(value) {
+      if (value !== "1") {
+        this.form.search_keyword = "";
+      }
     }
   }
 };
