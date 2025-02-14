@@ -103,3 +103,12 @@ export function delSuggestion(id) {
     method: 'delete'
   })
 }
+
+// 更新建議問題啟用狀態
+export function updateSuggestionStatus(data) {
+  return request({
+    url: '/sys_question/enable_suggestion',
+    method: 'post',
+    data: data
+  })
+}

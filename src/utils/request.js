@@ -22,6 +22,11 @@ const service = axios.create({
 
 // request拦截器
 service.interceptors.request.use(config => {
+  // 確保 URL 開頭有 "/"
+  if (config.url && !config.url.startsWith('/')) {
+    config.url = '/' + config.url;
+  }
+
   // 打印請求信息
   console.log(
     '\n%c 🚀 Request 🚀 ',

@@ -129,7 +129,10 @@ export default {
         tw: [
           { required: true, message: "中文名稱不能為空", trigger: "blur" }
         ]
-      }
+      },
+      ids: [],        // 添加用於存儲選中項的 id 數組
+      single: true,   // 添加用於控制單選
+      multiple: true  // 添加用於控制多選
     };
   },
   created() {
@@ -241,17 +244,20 @@ export default {
     // 新增方法用於取得圖片路徑
     getImageUrl(key) {
       // 檢查 key 值
-      console.log('當前 key:', key);
       
       // 檢查 API URL，移除結尾的斜線
       const baseUrl = (process.env.VUE_APP_API_URL || window.location.origin).replace(/\/$/, '');
-      console.log('baseUrl:', baseUrl);
       
       // 組合完整 URL
       const imageUrl = `${baseUrl}/icon/${key}.png`;
-      console.log('完整圖片路徑:', imageUrl);
       
       return imageUrl;
+    },
+    /** 多選框選中數據 */
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.id);
+      this.single = selection.length !== 1;
+      this.multiple = !selection.length;
     }
   }
 };

@@ -15,6 +15,12 @@
       <el-form-item label="關鍵字" prop="keyword">
         <el-input v-model="queryParams.keyword" placeholder="請輸入關鍵字" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+      <el-form-item label="狀態" prop="is_enabled">
+        <el-select v-model="queryParams.is_enabled" placeholder="請選擇狀態" clearable>
+          <el-option label="啟用" :value="1"></el-option>
+          <el-option label="停用" :value="0"></el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -108,10 +114,37 @@
           <span v-else>無限制條件</span>
         </template>
       </el-table-column>
-      <el-table-column label="AI" align="center" width="80" show-overflow-tooltip>
+      <el-table-column label="AI/關鍵字" align="center" width="200">
         <template slot-scope="scope">
-          <span v-if="scope.row.ai === 0">ChatGPT</span>
-          <span v-else-if="scope.row.ai === 1">Gemini</span>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <!-- AI 類型 -->
+            <el-tag 
+              size="mini" 
+              :type="scope.row.ai === 0 ? 'success' : 'warning'"
+              :class="[
+                'custom-tag',
+                scope.row.ai === 0 ? 'custom-tag--chatgpt' : 'custom-tag--gemini'
+              ]"
+            >
+              {{ scope.row.ai === 0 ? 'ChatGPT' : 'Gemini' }}
+            </el-tag>
+            <!-- 關鍵字 -->
+            <span v-if="scope.row.search_keyword" class="keyword" style="margin-top: 5px;">
+              <el-tag size="mini" type="info">{{ scope.row.search_keyword }}</el-tag>
+            </span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="狀態" align="center" width="100">
+        <template slot-scope="scope">
+          <el-switch
+            v-model="scope.row.is_enabled"
+            :active-value="1"
+            :inactive-value="0"
+            @change="handleStatusChange(scope.row)"
+            active-color="#13ce66"
+            inactive-color="#ff4949">
+          </el-switch>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="120" fixed="right">
@@ -144,137 +177,19 @@
       append-to-body
       @close="cancel"
     >
-      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
-        <el-form-item label="類型" prop="type">
-          <el-select v-model="form.type" placeholder="請選擇類型">
-            <el-option v-for="item in typeOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="問題" prop="tw" required>
-          <el-tag>中文</el-tag>
-          <el-input v-model="form.tw" placeholder="請輸入中文問題" />
-          <el-tag>英文</el-tag>
-          <el-input v-model="form.en" placeholder="請輸入英文問題" />
-        </el-form-item>
-        <el-form-item label="ICON" prop="direction" required>
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <el-select 
-              v-model="form.direction" 
-              placeholder="請選擇圖示"
-              filterable
-              style="width: 300px;"
-            >
-              <el-option
-                v-for="item in directionOptions"
-                :key="item.id"
-                :label="`${item.en}（${item.tw}）`"
-                :value="item.en"
-              >
-                <div style="display: flex; align-items: center;">
-                  <el-image 
-                    style="width: 20px; height: 20px; margin-right: 10px;"
-                    :src="getImageUrl(item.key)"
-                  >
-                    <div slot="error" class="image-slot">
-                      <i class="el-icon-picture-outline"></i>
-                    </div>
-                  </el-image>
-                  <span>{{ item.en }}（{{ item.tw }}）</span>
-                </div>
-              </el-option>
-            </el-select>
-
-            <el-image 
-              v-if="form.direction"
-              style="width: 40px; height: 40px;"
-              :src="getImageUrl(form.direction)"
-              :preview-src-list="[getImageUrl(form.direction)]"
-            >
-              <div slot="error" class="image-slot">
-                <i class="el-icon-picture-outline"></i>
-              </div>
-            </el-image>
-          </div>
-        </el-form-item>
-        <el-form-item label="AI 類型" prop="ai" @change="handleAIChange">
-          <el-select v-model="form.ai">
-            <el-option label="ChatGPT" value="0"></el-option>
-            <el-option label="Gemini" value="1"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item 
-          v-if="form.ai === '1'" 
-          label="搜尋詞" 
-          prop="search_keyword"
-          :rules="[
-            { required: true, message: '請輸入搜尋關鍵字', trigger: 'blur' }
-          ]"
-        >
-          <el-input
-            v-model="form.search_keyword"
-            placeholder="請輸入 Google Map 搜尋關鍵字"
-          />
-        </el-form-item>
-        <el-form-item label="提示詞" prop="description">
-          <el-input
-            type="textarea"
-            v-model="form.description"
-            placeholder="請輸入描述"
-            :rows="6"
-            :autosize="{ minRows: 6, maxRows: 10 }"
-          />
-        </el-form-item>
-        <el-form-item label="立即測試" v-if="testResult || isGenerating">
-          <el-input type="textarea" v-model="testResult" :placeholder="isGenerating ? '生成中請稍候...' : '點擊下方測試按鈕查看結果'" :rows="8" readonly class="test-result-textarea" />
-        </el-form-item>
-        <el-form-item label="條件" prop="condition">
-          <div v-for="(cond, index) in form.condition" :key="cond.id || index" style="margin-bottom: 20px;">
-            <div style="display: flex; align-items: center;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1;">
-                <div style="display: flex; align-items: center;">
-                  <span style="margin-right: 10px; width: 80px;">性別:</span>
-                  <el-select v-model="cond.sex" placeholder="性別" style="width: 200px;">
-                    <el-option label="不限" value="-1" />
-                    <el-option v-for="(label, key) in sexOptions" :key="key" :label="label" :value="key" />
-                  </el-select>
-                </div>
-                <div style="display: flex; align-items: center;">
-                  <span style="margin-right: 10px; width: 80px;">血型:</span>
-                  <el-select v-model="cond.blood_type" placeholder="血型" style="width: 200px;">
-                    <el-option label="不限" value="-1" />
-                    <el-option v-for="(label, key) in bloodTypeOptions" :key="key" :label="label" :value="key" />
-                  </el-select>
-                </div>
-                <div style="display: flex; align-items: center;">
-                  <span style="margin-right: 10px; width: 80px;">學事業:</span>
-                  <el-select v-model="cond.work_status" placeholder="學事業狀態" style="width: 200px;">
-                    <el-option v-for="option in workStatusOptions" :key="option.value" :label="option.label" :value="option.value" />
-                  </el-select>
-                </div>
-                <div style="display: flex; align-items: center;">
-                  <span style="margin-right: 10px; width: 80px;">感情:</span>
-                  <el-select v-model="cond.relationship_status" placeholder="感情狀態" style="width: 200px;">
-                    <el-option v-for="option in relationshipStatusOptions" :key="option.value" :label="option.label" :value="option.value" />
-                  </el-select>
-                </div>
-              </div>
-              <el-button 
-                size="mini" 
-                type="danger" 
-                icon="el-icon-delete" 
-                circle 
-                @click="removeCondition(index)" 
-                style="margin-left: 15px;"
-              />
-            </div>
-          </div>
-          <el-button type="primary" size="mini" icon="el-icon-plus" @click="addCondition">新增條件</el-button>
-        </el-form-item>
-      </el-form>
+      <question-form
+        ref="questionForm"
+        v-model="form"
+        :type-options="typeOptions"
+        :direction-options="directionOptions"
+        :is-suggestion="true"
+        :test-result="testResult"
+        page-type="suggestion"
+        @test="handleTest"
+      />
       <div slot="footer" class="dialog-footer">
-        <el-button @click="cancel">取消</el-button>
-        <el-button type="primary" @click="submitForm">確定</el-button>
-        <el-button type="warning" @click="submitTest">測試</el-button>
+        <el-button type="primary" @click="submitForm">確 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -286,16 +201,21 @@ import {
   getSuggestion, 
   delSuggestion, 
   addSuggestion, 
-  updateSuggestion, 
+  updateSuggestion,
+  updateSuggestionStatus,
   testSuggestion,
   suggestionConstants 
 } from "@/api/question/suggestion";
 import { getParams } from "@/api/system/params";
 import suggestionConfigData from "@/config/suggestionConfig";
+import QuestionForm from '@/components/Question/QuestionForm';
 
 export default {
   name: "Suggestion",
   dicts: ['sys_normal_disable'],
+  components: {
+    QuestionForm
+  },
   data() {
     // 直接在 data 中構建 typeOptions
     const buildTypeOptions = () => {
@@ -317,14 +237,16 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 50,
-        ai: '',
-        keyword: '',
-        type: undefined
+        type: undefined,
+        ai: undefined,
+        is_enabled: undefined,  // 添加狀態查詢參數
+        keyword: undefined
       },
       // 使用新的 typeOptions 定義
       typeOptions: buildTypeOptions(),
       form: {
         ...suggestionConstants.defaultForm,
+        is_enabled: 1,  // 設置預設值為啟用
         search_keyword: "",
         condition: [
           {
@@ -371,16 +293,30 @@ export default {
   },
   created() {
     this.$set(this, 'open', false);
-    this.getList();
-    this.getDirectionOptions();
+    // 只在組件創建時獲取一次方位選項
+    this.getDirectionOptions().then(() => {
+      // 獲取完方位選項後再獲取列表
+      this.getList();
+    });
   },
   methods: {
     getList() {
       this.loading = true;
-      listSuggestion(this.queryParams)
+      const params = {
+        ...this.queryParams,
+        // 確保 is_enabled 是數字類型
+        is_enabled: this.queryParams.is_enabled === undefined ? 
+          undefined : 
+          parseInt(this.queryParams.is_enabled)
+      };
+      
+      listSuggestion(params)
         .then(response => {
-          console.log('列表資料:', response.rows);
-          this.list = response.rows;
+          // 確保每條數據都有 is_enabled 欄位
+          this.list = response.rows.map(item => ({
+            ...item,
+            is_enabled: item.is_enabled === undefined ? 0 : item.is_enabled
+          }));
           this.total = response.total;
           this.loading = false;
         })
@@ -395,10 +331,15 @@ export default {
     cancel() {
       this.open = false;
       this.reset();
+      // 重置表單驗證狀態
+      this.$nextTick(() => {
+        this.$refs.questionForm && this.$refs.questionForm.resetFields();
+      });
     },
     reset() {
       this.form = {
         ...suggestionConstants.defaultForm,
+        is_enabled: 1,
         search_keyword: "",
         condition: [
           {
@@ -410,14 +351,33 @@ export default {
         ]
       };
       this.testResult = "";
+      // 重置表單驗證狀態
+      this.$nextTick(() => {
+        this.$refs.questionForm && this.$refs.questionForm.resetFields();
+      });
     },
     handleQuery() {
+      const params = {
+        ...this.queryParams,
+        // 確保 is_enabled 是數字類型
+        is_enabled: this.queryParams.is_enabled === undefined ? 
+          undefined : 
+          parseInt(this.queryParams.is_enabled)
+      };
+      
       this.queryParams.pageNum = 1;
       this.getList();
     },
     resetQuery() {
       this.resetForm("queryForm");
-      this.queryParams.type = undefined;
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 50,
+        type: undefined,
+        ai: undefined,
+        is_enabled: undefined,  // 重置時清空狀態
+        keyword: undefined
+      };
       this.handleQuery();
     },
     handleAdd() {
@@ -428,107 +388,66 @@ export default {
     handleUpdate(row) {
       this.reset();
       const id = row.id;
-      getSuggestion(id)
-        .then(response => {
-          const mapCondition = (condition) => {
-            return condition.map(cond => ({
-              sex: cond.sex === -1 ? "-1" : String(cond.sex),
-              work_status: cond.work_status === -1 ? "-1" : String(cond.work_status),
-              relationship_status: cond.relationship_status === -1 ? "-1" : String(cond.relationship_status),
-              blood_type: cond.blood_type === -1 ? "-1" : String(cond.blood_type)
-            }));
-          };
-
-          // 直接使用 String 轉換，因為我們的 typeOptions 已經是正確的格式
-          this.form = {
-            id: response.data.id,
-            type: String(response.data.type),  // 直接轉換為字串
-            tw: response.data.tw,
-            en: response.data.en,
-            direction: response.data.direction,
-            ai: String(response.data.ai),
-            search_keyword: response.data.search_keyword || "",
-            description: response.data.description || "",
-            condition: response.data.condition && response.data.condition.length > 0
-              ? mapCondition(response.data.condition)
-              : [
-                  {
-                    sex: "-1",
-                    work_status: "-1",
-                    relationship_status: "-1",
-                    blood_type: "-1"
-                  }
-                ]
-          };
-
-          console.log('原始數據:', response.data);
-          console.log('轉換後的表單數據:', this.form);
-          console.log('類型選項:', this.typeOptions);
-          
-          this.open = true;
-          this.title = "修改建議問題";
-        })
-        .catch(() => {
-          this.$message.error("獲取數據失敗");
-        });
+      this.loadSuggestionData(id);
     },
-    submitTest() {
-      this.isGenerating = true;
-      this.testResult = "生成中請稍候...";
+    loadSuggestionData(id) {
+      getSuggestion(id).then(response => {
+        // 直接使用原始數據，保持類型值不變
+        this.form = {
+          ...response.data,
+          direction: response.data.direction || '',
+          ai: String(response.data.ai)
+        };
+
+        this.open = true;
+        this.title = "修改建議問題";
+      });
+    },
+    handleTest() {
+      this.testResult = "生成中...";
       testSuggestion(this.form)
         .then(response => {
-          this.testResult = response.data.text;
+          if (response.code === 200) {
+            this.testResult = response.data.text;
+          } else {
+            this.testResult = "生成失敗：" + response.message;
+          }
         })
         .catch(error => {
-          this.$message.error("生成失敗：" + error.message);
-          this.testResult = "";
-        })
-        .finally(() => {
-          this.isGenerating = false;
+          this.testResult = "生成失敗：" + error.message;
         });
     },
     submitForm() {
-      this.$refs.form.validate(valid => {
+      this.$refs.questionForm.validate().then(valid => {
         if (valid) {
-          // 將顯示文字轉換回數字
-          const getKeyByValue = (obj, value) => {
-            return Object.keys(obj).find(key => obj[key] === value);
-          };
-
           const submitData = {
             ...this.form,
-            type: parseInt(this.form.type),
-            ai: parseInt(this.form.ai),
-            search_keyword: this.form.ai === "1" ? this.form.search_keyword : undefined,
-            condition: this.form.condition.map(cond => ({
-              sex: cond.sex === "-1" ? -1 : parseInt(cond.sex),
-              work_status: cond.work_status === "-1" ? -1 : parseInt(cond.work_status),
-              relationship_status: cond.relationship_status === "-1" ? -1 : parseInt(cond.relationship_status),
-              blood_type: cond.blood_type === "-1" ? -1 : parseInt(cond.blood_type)
-            }))
+            ai: String(this.form.ai),
+            direction: this.form.direction || '',
+            condition: this.form.condition || []
           };
 
-          console.log('提交的數據:', submitData);
-
-          if (this.form.id != undefined) {
+          if (submitData.id) {
             updateSuggestion(submitData).then(response => {
-              if (response.code !== 200) {
+              if (response.code === 200) {
+                this.$modal.msgSuccess("修改成功");
+                this.open = false;
+                this.getList();
+              } else {
                 this.$modal.msgError(response.message);
-                return;
               }
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
+            }).catch(() => {
+              this.$modal.msgError("修改失敗");
             });
           } else {
             addSuggestion(submitData).then(response => {
-              if (response.code !== 200) {
+              if (response.code === 200) {
+                this.$modal.msgSuccess("新增成功");
+                this.open = false;
+                this.getList();
+              } else {
                 this.$modal.msgError(response.message);
-                return;
               }
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
             });
           }
         }
@@ -561,25 +480,30 @@ export default {
     handleTypeChange() {
       // 處理類型變更（如需額外邏輯，可在此添加）
     },
-    // 獲取方位選項
+    // 修改獲取方位選項的方法
     getDirectionOptions() {
-      getParams({ type: 'direction' }).then(response => {
-        if (response.success && response.data) {
-          this.directionOptions = response.data;
-          // 建立方位對應 Map
-          this.directionOptions.forEach(item => {
-            this.directionMap.set(item.en, item);
-            // 新增：建立圖片對應關係
-            if (item.en) {
-              this.directionImageMap.set(item.en, item.key);
-            }
-          });
-          console.log('方位映射:', this.directionMap);
-          console.log('圖片映射:', this.directionImageMap);
-        }
-      }).catch(error => {
-        this.$message.error("獲取方位選項失敗：" + error.message);
-      });
+      if (this.directionOptions.length > 0) {
+        return Promise.resolve();
+      }
+
+      return getParams({ type: 'direction' })
+        .then(response => {
+          if (response.success && response.data) {
+            this.directionOptions = response.data.map(item => ({
+              key: item.key,
+              en: item.en,
+              tw: item.tw
+            }));
+            
+            // 建立映射
+            this.directionMap = new Map(
+              this.directionOptions.map(item => [item.en, item])
+            );
+          }
+        })
+        .catch(error => {
+          this.$message.error("獲取方位選項失敗：" + error.message);
+        });
     },
     // 獲取方位的顯示文字
     getDirectionLabel(direction) {
@@ -587,15 +511,11 @@ export default {
       return item ? `${item.en}（${item.tw}）` : direction;
     },
     getImageUrl(direction) {
-      // 檢查 direction 值
-      console.log('當前 direction:', direction);
-      
+      // 檢查 direction 值  
       // 檢查 API URL，移除結尾的斜線
       const baseUrl = (process.env.VUE_APP_API_URL || window.location.origin).replace(/\/$/, '');
-      
       // 直接使用 direction 作為圖檔名稱
       const imageUrl = `${baseUrl}/icon/${direction}.png`;
-      console.log('完整圖片路徑:', imageUrl);
       
       return imageUrl;
     },
@@ -620,6 +540,20 @@ export default {
       if (value !== "1") {
         this.form.search_keyword = "";
       }
+    },
+    // 處理狀態變更
+    handleStatusChange(row) {
+      const text = row.is_enabled === 1 ? '啟用' : '停用';
+      this.$modal.confirm('確認要' + text + '該建議問題嗎？').then(() => {
+        return updateSuggestionStatus({
+          id: row.id,
+          enable: row.is_enabled
+        });
+      }).then(() => {
+        this.$modal.msgSuccess(text + '成功');
+      }).catch(() => {
+        row.is_enabled = row.is_enabled === 1 ? 0 : 1; // 切換失敗時恢復狀態
+      });
     }
   }
 };
@@ -656,5 +590,38 @@ export default {
   color: #ff4949 !important;  /* hover 時的顏色 */
   background-color: #fef0f0;  /* hover 時的背景色 */
   border-radius: 2px;  /* 輕微圓角 */
+}
+
+.el-switch {
+  margin: 0 auto;
+}
+
+.custom-tag.el-tag--success {
+  background-color: #e7faf0;
+  border-color: #d0f5e0;
+  color: #13ce66;
+}
+
+// ChatGPT 標籤樣式 (綠色系)
+.custom-tag--chatgpt.el-tag--success {
+  background-color: #e7faf0;
+  border-color: #d0f5e0;
+  color: #13ce66;
+}
+
+// Gemini 標籤樣式 (藍色系)
+.custom-tag--gemini.el-tag--warning {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+  color: #1890ff;
+}
+
+.keyword {
+  .el-tag {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>
